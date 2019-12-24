@@ -1228,12 +1228,12 @@ newAckForMessageId:(UInt16)msgId {
         NSData *messageData = (NSData *)message;
         AWSDDLogVerbose(@"Websocket didReceiveMessage: Received %lu bytes", (unsigned long)messageData.length);
     
-        // When a message is received, write it to the Decoder's input stream.
-        [self.toDecoderStream write:[messageData bytes] maxLength:messageData.length];
-
 #if DEBUG
         [self.dataWriter writeData:messageData];
 #endif
+
+        // When a message is received, write it to the Decoder's input stream.
+        [self.toDecoderStream write:[messageData bytes] maxLength:messageData.length];
     }
     else
     {
