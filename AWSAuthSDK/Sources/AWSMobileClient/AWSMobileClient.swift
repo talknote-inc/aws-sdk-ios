@@ -118,7 +118,12 @@ final public class AWSMobileClient: _AWSMobileClient {
     
     internal weak var developerNavigationController: UINavigationController? = nil
     
-    var keychain: AWSUICKeyChainStore = AWSUICKeyChainStore.init(service: "\(String(describing: Bundle.main.bundleIdentifier)).AWSMobileClient")
+    var keychain: AWSUICKeyChainStore = {
+        let keychainInfo = AWSInfo.default().defaultServiceInfo("Keychain")
+        let service = keychainInfo?.infoDictionary["Service"] as? String ?? Bundle.main.bundleIdentifier
+        let accessGroup = keychainInfo?.infoDictionary["AccessGroup"] as? String
+        return AWSUICKeyChainStore.init(service: "\(String(describing: service)).AWSMobileClient")
+    }()
     
     internal var isCognitoAuthRegistered = false
     internal let CognitoAuthRegistrationKey = "AWSMobileClient"
