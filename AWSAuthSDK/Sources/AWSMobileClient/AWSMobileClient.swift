@@ -119,9 +119,9 @@ final public class AWSMobileClient: _AWSMobileClient {
     internal weak var developerNavigationController: UINavigationController? = nil
     
     var keychain: AWSUICKeyChainStore = {
-        let keychainInfo = AWSInfo.default().defaultServiceInfo("Keychain")
-        let service = keychainInfo?.infoDictionary["Service"] as? String ?? Bundle.main.bundleIdentifier
-        let accessGroup = keychainInfo?.infoDictionary["AccessGroup"] as? String
+        let keychainInfo = AWSInfo.default().rootInfoDictionary["Keychain"] as? Dictionary<String, Any>
+        let service = keychainInfo?["Service"] as? String ?? Bundle.main.bundleIdentifier
+        let accessGroup = keychainInfo?["AccessGroup"] as? String
         return AWSUICKeyChainStore.init(service: "\(String(describing: service)).AWSMobileClient")
     }()
     

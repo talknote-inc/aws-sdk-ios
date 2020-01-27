@@ -71,7 +71,7 @@ static NSDictionary<NSString *, id> * _userConfig = nil;
 
         NSDictionary <NSString *, id> *defaultCredentialsProviderDictionary = [[[_rootInfoDictionary objectForKey:AWSInfoCredentialsProvider] objectForKey:AWSInfoCognitoIdentity] objectForKey:AWSInfoDefault];
         NSString *cognitoIdentityPoolID = [defaultCredentialsProviderDictionary objectForKey:AWSInfoCognitoIdentityPoolId];
-        NSDictionary <NSString *, id> *defaultKeychainDictionary = [[_rootInfoDictionary objectForKey:AWSInfoKeychain] objectForKey:AWSInfoDefault];
+        NSDictionary <NSString *, id> *defaultKeychainDictionary = [_rootInfoDictionary objectForKey:AWSInfoKeychain];
         NSString *keychainService = [defaultKeychainDictionary objectForKey:AWSInfoKeychainService];
         NSString *keychainAccessGroup = [defaultKeychainDictionary objectForKey:AWSInfoKeychainService];
 
