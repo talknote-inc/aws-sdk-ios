@@ -122,7 +122,7 @@ final public class AWSMobileClient: _AWSMobileClient {
         let keychainInfo = AWSInfo.default().rootInfoDictionary["Keychain"] as? Dictionary<String, Any>
         let service = keychainInfo?["Service"] as? String ?? Bundle.main.bundleIdentifier
         let accessGroup = keychainInfo?["AccessGroup"] as? String
-        return AWSUICKeyChainStore.init(service: "\(String(describing: service)).AWSMobileClient")
+        return AWSUICKeyChainStore.init(service: "\(String(describing: service)).AWSMobileClient", accessGroup: accessGroup)
     }()
     
     internal var isCognitoAuthRegistered = false
