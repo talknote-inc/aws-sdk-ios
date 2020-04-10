@@ -67,6 +67,7 @@ final public class AWSMobileClient: _AWSMobileClient {
     internal var signInURIQueryParameters: [String: String]? = nil
     internal var tokenURIQueryParameters: [String: String]? = nil
     internal var signOutURIQueryParameters: [String: String]? = nil
+    internal var scopes: [String]? = nil
     
     // MARK: Execution Helpers (DispatchQueue, OperationQueue, DispatchGroup)
     
@@ -106,6 +107,7 @@ final public class AWSMobileClient: _AWSMobileClient {
     let SignOutURIQueryParametersKey: String = "signOutURIQueryParameters"
     let CustomRoleArnKey: String = "customRoleArn"
     let FederationDisabledKey: String = "federationDisabled"
+    let HostedUIOptionsScopesKey: String = "hostedUIOptionsScopes"
     
     /// The internal Cognito Credentials Provider
     var internalCredentialsProvider: AWSCognitoCredentialsProvider?
@@ -236,6 +238,7 @@ final public class AWSMobileClient: _AWSMobileClient {
             }
             
             if self.federationProvider == .hostedUI {
+                loadHostedUIScopesFromKeychain()
                 loadOAuthURIQueryParametersFromKeychain()
                 
                 let infoDictionaryMobileClient = self.awsInfo.rootInfoDictionary["Auth"] as? [String: [String: Any]]
@@ -245,7 +248,10 @@ final public class AWSMobileClient: _AWSMobileClient {
                 let secret = infoDictionary?["AppClientSecret"] as? String
                 let webDomain = infoDictionary?["WebDomain"] as? String
                 let hostURL = "https://\(webDomain!)"
-                let scopes = infoDictionary?["Scopes"] as? [String]
+                
+                if self.scopes == nil {
+                    self.scopes = infoDictionary?["Scopes"] as? [String]
+                }
                 
                 let signInRedirectURI = infoDictionary?["SignInRedirectURI"] as? String
                 let signInURI = infoDictionary?["SignInURI"] as? String
@@ -270,7 +276,7 @@ final public class AWSMobileClient: _AWSMobileClient {
                 
                 let cognitoAuthConfig: AWSCognitoAuthConfiguration = AWSCognitoAuthConfiguration.init(appClientId: clientId!,
                                                                                                       appClientSecret: secret,
-                                                                                                      scopes: Set<String>(scopes!.map { $0 }),
+                                                                                                      scopes: Set<String>(self.scopes!.map { $0 }),
                                                                                                       signInRedirectUri: signInRedirectURI!,
                                                                                                       signOutRedirectUri: signOutRedirectURI!,
                                                                                                       webDomain: hostURL,
@@ -420,10 +426,12 @@ final public class AWSMobileClient: _AWSMobileClient {
             
             let federationProviderIdentifier = hostedUIOptions.federationProviderName
             
-            var scopes = infoDictionary?["Scopes"] as? [String]
-            
             if hostedUIOptions.scopes != nil {
-                scopes = hostedUIOptions.scopes
+                self.scopes = hostedUIOptions.scopes
+            }
+            else {
+                self.scopes = infoDictionary?["Scopes"] as? [String]
+                self.clearHostedUIOptionsScopesFromKeychain()
             }
             
             if hostedUIOptions.signInURIQueryParameters != nil {
@@ -446,7 +454,7 @@ final public class AWSMobileClient: _AWSMobileClient {
             
             let cognitoAuthConfig: AWSCognitoAuthConfiguration = AWSCognitoAuthConfiguration.init(appClientId: clientId!,
                                              appClientSecret: secret,
-                                             scopes: Set<String>(scopes!.map { $0 }),
+                                             scopes: Set<String>(self.scopes!.map { $0 }),
                                              signInRedirectUri: signInRedirectURI!,
                                              signOutRedirectUri: signOutRedirectURI!,
                                              webDomain: hostURL,
@@ -495,6 +503,11 @@ final public class AWSMobileClient: _AWSMobileClient {
                     }
                     signInInfo[self.TokenKey] = session.accessToken!.tokenString
                     signInInfo[self.ProviderKey] = "OAuth"
+                    
+                    // Upon successful sign in, store scopes specified using HostedUIOptions in Keychain
+                    if hostedUIOptions.scopes != nil {
+                        self.saveHostedUIOptionsScopesInKeychain()
+                    }
                     
                     self.performHostedUISuccessfulSignInTasks(disableFederation: hostedUIOptions.disableFederation, session: session, federationToken: federationToken!, federationProviderIdentifier: federationProviderIdentifier, signInInfo: &signInInfo)
                     self.mobileClientStatusChanged(userState: .signedIn, additionalInfo: signInInfo)

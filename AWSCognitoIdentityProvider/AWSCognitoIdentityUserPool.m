@@ -199,10 +199,12 @@ static NSString *const AWSKeychainAccessGroup = @"AccessGroup";
     _delegate = nil;
 }
 
+
 - (AWSTask<AWSCognitoIdentityUserPoolSignUpResponse *>*) signUp: (NSString*) username
                                      password: (NSString*) password
                                userAttributes: (NSArray<AWSCognitoIdentityUserAttributeType *> *) userAttributes
-                               validationData: (NSArray<AWSCognitoIdentityUserAttributeType *> *) validationData {
+                               validationData: (NSArray<AWSCognitoIdentityUserAttributeType *> *) validationData
+                               clientMetaData:(nullable NSDictionary<NSString *,NSString *> *)clientMetaData {
     AWSCognitoIdentityProviderSignUpRequest* request = [AWSCognitoIdentityProviderSignUpRequest new];
     request.clientId = self.userPoolConfiguration.clientId;
     request.username = username;
@@ -213,6 +215,7 @@ static NSString *const AWSKeychainAccessGroup = @"AccessGroup";
     request.analyticsMetadata = [self analyticsMetadata];
     AWSCognitoIdentityUser *contextUser = [[AWSCognitoIdentityUser alloc] initWithUsername:username pool:self];
     request.userContextData = [self userContextData:username deviceId:[contextUser asfDeviceId]];
+    request.clientMetadata = clientMetaData;
     
     return [[self.client signUp:request] continueWithSuccessBlock:^id _Nullable(AWSTask<AWSCognitoIdentityProviderSignUpResponse *> * _Nonnull task) {
         AWSCognitoIdentityUser * user = [[AWSCognitoIdentityUser alloc] initWithUsername:username pool:self];
@@ -227,6 +230,14 @@ static NSString *const AWSKeychainAccessGroup = @"AccessGroup";
         return [AWSTask taskWithResult:signupResponse];
     }];
 }
+
+- (AWSTask<AWSCognitoIdentityUserPoolSignUpResponse *>*) signUp: (NSString*) username
+                                     password: (NSString*) password
+                               userAttributes: (NSArray<AWSCognitoIdentityUserAttributeType *> *) userAttributes
+                               validationData: (NSArray<AWSCognitoIdentityUserAttributeType *> *) validationData {
+    return [self signUp:username password:password userAttributes:userAttributes validationData:validationData clientMetaData:nil];
+}
+
 
 - (AWSCognitoIdentityUser*) currentUser {
     return [[AWSCognitoIdentityUser alloc] initWithUsername:[self currentUsername] pool: self];

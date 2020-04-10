@@ -448,6 +448,7 @@
 		9AD5842820F63E6700042041 /* singleface.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 9AD5842620F63E6700042041 /* singleface.jpg */; };
 		9AD5842A20F63E9B00042041 /* city_thumb.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 9AD5842920F63E9B00042041 /* city_thumb.jpg */; };
 		B434294122F0FA0E00567E83 /* AWSTextract.h in Headers */ = {isa = PBXBuildFile; fileRef = B434294022F0FA0D00567E83 /* AWSTextract.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B44FBC4823F4B27D008EA8D2 /* AWSSignatureNullabilityTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B44FBC4723F4B27D008EA8D2 /* AWSSignatureNullabilityTests.m */; };
 		B47FAF4322C577CE00014548 /* AWSS3TransferUtilityUnitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B47FAF4222C577CE00014548 /* AWSS3TransferUtilityUnitTests.m */; };
 		B482E84722EEA9F20075A0A3 /* AWSS3TestHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = B482E84622EEA9F20075A0A3 /* AWSS3TestHelper.m */; };
 		B4A4DFFE22B4201400379396 /* AWSSageMakerRuntime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B4A4DFF522B4201300379396 /* AWSSageMakerRuntime.framework */; };
@@ -521,6 +522,7 @@
 		B5DD455F22CA6B38003871AE /* libOCMock.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CEB8EF551C6A6A2E0098B15B /* libOCMock.a */; settings = {ATTRIBUTES = (Required, ); }; };
 		B5DD456222CA6E01003871AE /* AWSConnectTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5DD456122CA6E01003871AE /* AWSConnectTests.swift */; };
 		B5DD458622CAD272003871AE /* AWSTestUtility.m in Sources */ = {isa = PBXBuildFile; fileRef = CEB8EF2E1C6A69A00098B15B /* AWSTestUtility.m */; };
+		C436FB0A2437EBE30004738F /* AWSPinpointNotificationManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = C436FB092437EBE30004738F /* AWSPinpointNotificationManagerTests.m */; };
 		CE0D41701C6A66E5006B91B5 /* AWSCore.h in Headers */ = {isa = PBXBuildFile; fileRef = CE0D416F1C6A66E5006B91B5 /* AWSCore.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		CE0D42231C6A673E006B91B5 /* AWSCredentialsProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = CE0D41851C6A673E006B91B5 /* AWSCredentialsProvider.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		CE0D42241C6A673E006B91B5 /* AWSCredentialsProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = CE0D41861C6A673E006B91B5 /* AWSCredentialsProvider.m */; };
@@ -3823,6 +3825,7 @@
 		9AD5842620F63E6700042041 /* singleface.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = singleface.jpg; sourceTree = "<group>"; };
 		9AD5842920F63E9B00042041 /* city_thumb.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = city_thumb.jpg; sourceTree = "<group>"; };
 		B434294022F0FA0D00567E83 /* AWSTextract.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AWSTextract.h; sourceTree = "<group>"; };
+		B44FBC4723F4B27D008EA8D2 /* AWSSignatureNullabilityTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AWSSignatureNullabilityTests.m; sourceTree = "<group>"; };
 		B47FAF4222C577CE00014548 /* AWSS3TransferUtilityUnitTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AWSS3TransferUtilityUnitTests.m; sourceTree = "<group>"; };
 		B482E84522EEA9F10075A0A3 /* AWSS3TestHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AWSS3TestHelper.h; sourceTree = "<group>"; };
 		B482E84622EEA9F20075A0A3 /* AWSS3TestHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AWSS3TestHelper.m; sourceTree = "<group>"; };
@@ -3893,6 +3896,7 @@
 		B5DD455D22CA6AC9003871AE /* libOCMock.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libOCMock.a; path = "../../aws-sdk-ios/AWSCoreTests/OCMock/libOCMock.a"; sourceTree = "<group>"; };
 		B5DD456022CA6E00003871AE /* AWSConnectTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AWSConnectTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		B5DD456122CA6E01003871AE /* AWSConnectTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AWSConnectTests.swift; sourceTree = "<group>"; };
+		C436FB092437EBE30004738F /* AWSPinpointNotificationManagerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AWSPinpointNotificationManagerTests.m; sourceTree = "<group>"; };
 		CE0D416D1C6A66E5006B91B5 /* AWSCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AWSCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE0D416F1C6A66E5006B91B5 /* AWSCore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AWSCore.h; sourceTree = "<group>"; };
 		CE0D41711C6A66E5006B91B5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -6071,6 +6075,7 @@
 			isa = PBXGroup;
 			children = (
 				1879900A1DEFCBFC00BC419B /* AWSGeneralPinpointTargetingTests.m */,
+				C436FB092437EBE30004738F /* AWSPinpointNotificationManagerTests.m */,
 				18798F9D1DEF9EF900BC419B /* Info.plist */,
 			);
 			path = AWSPinpointUnitTests;
@@ -6711,6 +6716,7 @@
 				CEB8EF281C6A69A00098B15B /* AWSNetworkingTests.m */,
 				CEB8EF291C6A69A00098B15B /* AWSSerializationTests.m */,
 				CEB8EF2B1C6A69A00098B15B /* AWSSignatureTests.m */,
+				B44FBC4723F4B27D008EA8D2 /* AWSSignatureNullabilityTests.m */,
 				CEB8EF2C1C6A69A00098B15B /* AWSSTSTests.m */,
 				CEB8EF2D1C6A69A00098B15B /* AWSTestUtility.h */,
 				CEB8EF2E1C6A69A00098B15B /* AWSTestUtility.m */,
@@ -13009,6 +13015,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				18F455471DEFE875000D2F68 /* AWSTestUtility.m in Sources */,
+				C436FB0A2437EBE30004738F /* AWSPinpointNotificationManagerTests.m in Sources */,
 				1879900C1DEFCBFC00BC419B /* AWSGeneralPinpointTargetingTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -13363,6 +13370,7 @@
 				CEB8EF301C6A69A00098B15B /* AWSClockSkewTests.m in Sources */,
 				CEB8EF3C1C6A69A00098B15B /* AWSUtilityTests.m in Sources */,
 				CEB8EF321C6A69A00098B15B /* AWSCognitoIdentityServiceTests.m in Sources */,
+				B44FBC4823F4B27D008EA8D2 /* AWSSignatureNullabilityTests.m in Sources */,
 				CEB8EF361C6A69A00098B15B /* AWSNetworkingTests.m in Sources */,
 				CEB8EF391C6A69A00098B15B /* AWSSignatureTests.m in Sources */,
 				CEB8EF3B1C6A69A00098B15B /* AWSTestUtility.m in Sources */,

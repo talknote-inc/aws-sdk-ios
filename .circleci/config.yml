@@ -239,7 +239,7 @@ commands:
 jobs:
   build:
     macos:
-      xcode: "11.2.1"
+      xcode: "11.4.0"
     steps:
       - skip_job_unless_required
       - checkout
@@ -258,7 +258,7 @@ jobs:
             xcodebuild build -project AWSAuthSDK/AWSAuthSDK.xcodeproj -scheme AWSAuthSDKAllTargets -sdk iphonesimulator -destination "${destination}"
   unittest:
     macos:
-      xcode: "11.2.1"
+      xcode: "11.4.0"
     steps:
       - set_environment_variables
       - override_test_job
@@ -283,7 +283,9 @@ jobs:
           path: test_result
   pre_integrationtest:
     macos:
-      xcode: "11.2.1"
+      xcode: "11.4.0"
+    environment: 
+      TERM: xterm-256color
     steps:
       - skip_job_unless_required
       - set_environment_variables
@@ -327,7 +329,7 @@ jobs:
             - build_result
   post_integrationtest:
     macos:
-      xcode: "11.2.1"
+      xcode: "11.4.0"
     steps:
       #TODO need check why multiple key does not work here
       - skip_job_unless_required
@@ -416,7 +418,7 @@ jobs:
         default: stable_testList
         type: string
     macos:
-      xcode: "11.2.1"
+      xcode: "11.4.0"
     steps:
       - set_environment_variables
       - override_test_job
@@ -459,7 +461,7 @@ jobs:
 
   release_tag:
     macos:
-      xcode: "11.2.1"
+      xcode: "11.4.0"
     steps:
       - skip_job_unless_required
       - checkout
@@ -476,7 +478,7 @@ jobs:
 
   release_carthage:
     macos:
-      xcode: "11.2.1"
+      xcode: "11.4.0"
     steps:
       - skip_job_unless_required
       - checkout
@@ -505,23 +507,25 @@ jobs:
       - run:
           name: Create Carthage Archive
           command: python3 ./CircleciScripts/create_carthage_archive.py
+          no_output_timeout: 20m
       - run:
           name: upload file to git release
           command: github-release upload -s ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -t ${CIRCLE_TAG} -f aws-sdk-ios-carthage.framework.zip -n aws-sdk-ios-carthage.framework.zip
 
   release_cocoapods:
     macos:
-      xcode: "11.2.1"
+      xcode: "11.4.0"
     steps:
       - skip_job_unless_required
       - checkout
       - run:
           name: Release cocoapods
           command: python3 ./CircleciScripts/cocoapods_release.py
+          no_output_timeout: 20m
 
   release_docs:
     macos:
-      xcode: "11.2.1"
+      xcode: "11.4.0"
     steps:
       - skip_job_unless_required
       - checkout
@@ -551,7 +555,7 @@ jobs:
 
   add_doc_tag:
     macos:
-      xcode: "11.2.1"
+      xcode: "11.4.0"
     steps:
       - skip_job_unless_required
       - checkout
@@ -565,7 +569,7 @@ jobs:
 
   bump_ios_sampleapp_version:
     macos:
-      xcode: "11.2.1"
+      xcode: "11.4.0"
     steps:
       - skip_job_unless_required
       - set_environment_variables
@@ -609,7 +613,7 @@ jobs:
 
   bump_ios_amplifydocs_version:
     macos:
-      xcode: "11.2.1"
+      xcode: "11.4.0"
     steps:
       - skip_job_unless_required
       - set_environment_variables
@@ -618,13 +622,13 @@ jobs:
       - run:
           name: set_bumpversion_environment
           command: |
-            bumpversion_repo_account=aws-amplify
+            bumpversion_repo_user=aws-amplify
             bumpversion_repo_name=docs
             minorversion=$(echo $release_version | sed "s/\([0-9]*.[0-9]*\).[0-9]*/\1/")
             echo ${minorversion}
             bump_version_message="Update iOS docs to ${release_version}"
             bump_version_pr_title="Update iOS docs to ${release_version}"
-            echo "export bumpversion_repo_account=$bumpversion_repo_account" >> $BASH_ENV
+            echo "export bumpversion_repo_user=$bumpversion_repo_user" >> $BASH_ENV
             echo "export bumpversion_repo_name=$bumpversion_repo_name" >> $BASH_ENV
             echo "export minorversion=$minorversion" >> $BASH_ENV
             echo "export bump_version_message='${bump_version_message}'" >> $BASH_ENV
@@ -639,7 +643,9 @@ jobs:
 
   release_ios_s3:
     macos:
-      xcode: "11.2.1"
+      xcode: "11.4.0"
+    environment:
+      TERM: xterm-256color
     steps:
       - skip_job_unless_required
       - checkout
@@ -1627,27 +1633,10 @@ workflows:
               ignore: /.*/
             tags:
               only: /^[0-9]+.[0-9]+.[0-9]+$/
-      - release_carthage:
+      - release_docs:
           requires:
             - release_tag
             - release_ios_s3
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^[0-9]+.[0-9]+.[0-9]+$/
-      - release_cocoapods:
-          requires:
-            - release_ios_s3
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^[0-9]+.[0-9]+.[0-9]+$/
-      - release_docs:
-          requires:
-            - release_carthage
-            - release_cocoapods
           filters:
             branches:
               ignore: /.*/
@@ -1663,8 +1652,26 @@ workflows:
               only: /^[0-9]+.[0-9]+.[0-9]+$/
       - bump_ios_amplifydocs_version:
           requires:
-            - release_carthage
-            - release_cocoapods
+            - release_tag
+            - release_ios_s3
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^[0-9]+.[0-9]+.[0-9]+$/
+      - release_cocoapods:
+          requires:
+            - add_doc_tag
+            - bump_ios_amplifydocs_version
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^[0-9]+.[0-9]+.[0-9]+$/
+      - release_carthage:
+          requires:
+            - add_doc_tag
+            - bump_ios_amplifydocs_version
           filters:
             branches:
               ignore: /.*/
@@ -1672,12 +1679,11 @@ workflows:
               only: /^[0-9]+.[0-9]+.[0-9]+$/
       - bump_ios_sampleapp_version:
           requires:
-            - release_carthage
+            - release_tag
+            - release_ios_s3
             - release_cocoapods
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /^[0-9]+.[0-9]+.[0-9]+$/
-
-
