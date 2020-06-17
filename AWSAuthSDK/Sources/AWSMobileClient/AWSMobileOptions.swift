@@ -80,6 +80,7 @@ public struct FederatedSignInOptions {
 /// NOTE: If specified, some of the values in this type will override the corresponding values in `awsconfiguration.json`. See
 /// the `init` method below.
 public struct HostedUIOptions {
+    let parameters: CognitoAuthParameters?
     let scopes: [String]?
     
     let identityProvider: String?
@@ -97,6 +98,7 @@ public struct HostedUIOptions {
     ///
     /// - Parameters:
     ///   - disableFederation: If set to true, will not federate with Cognito Identity service to fetch AWSCredentials. `true` by default.
+    ///   - parameters: for Talknote
     ///   - scopes: The scopes for the current login session. If specified here, the scopes specified in `awsconfiguration.json` would be over-ridden.
     ///   - identityProvider: The IdentityProvider to be used for hosted UI. If using Cognito UserPools it could be `Google`, `Facebook`, etc.
     ///   - idpIdentifier: The IdentityProvider identifier if using multiple instances of same identity provider.
@@ -105,6 +107,7 @@ public struct HostedUIOptions {
     ///   - tokenURIQueryParameters: The additional query parameters apart from standard OAuth w/ open id connect parameters for tokenURI. If specified here, the tokenURIQueryParameters specified in `awsconfiguration.json` would be over-ridden.
     ///   - signOutURIQueryParameters: The additional query parameters apart from standard OAuth w/ open id connect parameters for signOutURI. If specified here, the signOutURIQueryParameters specified in `awsconfiguration.json` would be over-ridden.
     public init(disableFederation: Bool = false,
+                parameters: CognitoAuthParameters? = nil,
                 scopes: [String]? = nil,
                 identityProvider: String? = nil,
                 idpIdentifier: String? = nil,
@@ -129,6 +132,7 @@ public struct HostedUIOptions {
         self.signInURIQueryParameters = signInURIQueryParameters
         self.tokenURIQueryParameters = tokenURIQueryParameters
         self.signOutURIQueryParameters = signOutURIQueryParameters
+        self.parameters = parameters
     }
 }
 
@@ -157,5 +161,36 @@ public enum IdentityProvider: String {
         default:
             return nil
         }
+    }
+}
+
+/// for Talknote SAML
+/// added 20200605
+/// by kubota
+public struct CognitoAuthParameters {
+    private let clientIdKey = "AppClientId"
+    private let clientSecretKey = "AppClientSecret"
+
+    let clientId: String
+    let clientSecret: String?
+
+    public init(clientId: String,
+                clientSecret: String? = nil) {
+        self.clientId = clientId
+        self.clientSecret = clientSecret
+    }
+
+    public init?(dict: [String: String]?) {
+        guard let dict = dict, let clientId = dict[clientIdKey] else { return nil }
+        self.clientId = clientId
+        self.clientSecret = dict[clientSecretKey]
+    }
+
+    internal func toDictionary() -> [String: String] {
+        return [
+            clientIdKey: clientId,
+            clientSecretKey: clientSecret,
+
+        ].compactMapValues { $0 }
     }
 }
