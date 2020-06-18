@@ -149,6 +149,7 @@ public enum IdentityProvider: String {
     case twitter = "api.twitter.com"
     case amazon = "www.amazon.com"
     case developer = "cognito-identity.amazonaws.com"
+    case apple = "appleid.apple.com"
     
     func getHostedUIIdentityProvider() -> String? {
         switch self {
@@ -158,6 +159,8 @@ public enum IdentityProvider: String {
             return "Google"
         case .amazon:
             return "LoginWithAmazon"
+        case .apple:
+            return "SignInWithApple"
         default:
             return nil
         }
