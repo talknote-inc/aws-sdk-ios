@@ -44,7 +44,9 @@ enum FederationProvider: String {
 final public class AWSMobileClient: _AWSMobileClient {
     
     static var _sharedInstance: AWSMobileClient = AWSMobileClient(setDelegate: true)
-    
+
+    static var serviceConfiguration: CognitoServiceConfiguration? = nil
+
     // MARK: Feature availability variables
     
     /// Determines if there is any Cognito Identity Pool available to federate against it.
@@ -313,7 +315,8 @@ final public class AWSMobileClient: _AWSMobileClient {
                                                                                                       tokensUri: tokensURI,
                                                                                                       signInUriQueryParameters: self.signInURIQueryParameters,
                                                                                                       signOutUriQueryParameters: self.signOutURIQueryParameters,
-                                                                                                      tokenUriQueryParameters: self.tokenURIQueryParameters)
+                                                                                                      tokenUriQueryParameters: self.tokenURIQueryParameters,
+                                                                                                      userPoolServiceConfiguration: AWSMobileClient.serviceConfiguration?.userPoolServiceConfiguration)
                 
                 if (isCognitoAuthRegistered) {
                     AWSCognitoAuth.remove(forKey: CognitoAuthRegistrationKey)
@@ -499,7 +502,8 @@ final public class AWSMobileClient: _AWSMobileClient {
                                              tokensUri: tokensURI,
                                              signInUriQueryParameters: self.signInURIQueryParameters,
                                              signOutUriQueryParameters: self.signOutURIQueryParameters,
-                                             tokenUriQueryParameters: self.tokenURIQueryParameters)
+                                             tokenUriQueryParameters: self.tokenURIQueryParameters,
+                                             userPoolServiceConfiguration: AWSMobileClient.serviceConfiguration?.userPoolServiceConfiguration)
 
             if (isCognitoAuthRegistered) {
                 AWSCognitoAuth.remove(forKey: CognitoAuthRegistrationKey)
@@ -560,7 +564,7 @@ final public class AWSMobileClient: _AWSMobileClient {
         } else {
             self.showSign(inScreen: navigationController, signInUIConfiguration: signInUIOptions, completionHandler: { providerName, token, error in
                 if error == nil {
-                    if (providerName == IdentityProvider.facebook.rawValue) || (providerName == IdentityProvider.google.rawValue) {
+                    if (providerName == IdentityProvider.facebook.rawValue) || (providerName == IdentityProvider.google.rawValue || providerName == IdentityProvider.apple.rawValue) {
                         self.federatedSignIn(providerName: providerName!, token: token!, completionHandler: completionHandler)
                     } else {
                         self.currentUser?.getSession().continueWith(block: { (task) -> Any? in
@@ -659,4 +663,28 @@ extension AWSMobileClient {
         self.internalCredentialsProvider?.clearKeychain()
     }
     
+}
+
+// MARK:- AWSMobileClient Cognito configuration
+
+public extension AWSMobileClient {
+
+    /// Updates the service configuration for the Cognito Services
+    ///
+    /// - Warning: This method is intended for internal use only.
+    static func updateCognitoService(userPoolConfiguration: AWSServiceConfiguration?,
+                                     identityPoolConfiguration: AWSServiceConfiguration?) {
+        let configuration = CognitoServiceConfiguration(userPoolServiceConfiguration: userPoolConfiguration,
+                                                        identityPoolServiceConfiguration: identityPoolConfiguration)
+        self.serviceConfiguration = configuration
+        UserPoolOperationsHandler.serviceConfiguration = configuration
+        AWSInfo.configureIdentityPoolService(configuration.identityPoolServiceConfiguration)
+    }
+}
+
+struct CognitoServiceConfiguration {
+
+    let userPoolServiceConfiguration: AWSServiceConfiguration?
+
+    let identityPoolServiceConfiguration: AWSServiceConfiguration?
 }

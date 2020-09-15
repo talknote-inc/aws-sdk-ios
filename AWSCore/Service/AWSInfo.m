@@ -55,6 +55,7 @@ static NSString *const AWSInfoKeychainAccessGroup = @"AccessGroup";
 
 static AWSInfo *_defaultAWSInfo = nil;
 static NSDictionary<NSString *, id> * _userConfig = nil;
+static AWSServiceConfiguration *_identityPoolConfiguration = nil;
 
 - (instancetype)initWithConfiguration:(NSDictionary<NSString *, id> *)config {
     if (self = [super init]) {
@@ -77,10 +78,16 @@ static NSDictionary<NSString *, id> * _userConfig = nil;
 
         AWSRegionType cognitoIdentityRegion =  [[defaultCredentialsProviderDictionary objectForKey:AWSInfoRegion] aws_regionTypeValue];
         if (cognitoIdentityPoolID && cognitoIdentityRegion != AWSRegionUnknown) {
-            _defaultCognitoCredentialsProvider = [[AWSCognitoCredentialsProvider alloc] initWithRegionType:cognitoIdentityRegion
-                                                                                            identityPoolId:cognitoIdentityPoolID
-                                                                                           keychainService:keychainService
-                                                                                       keychainAccessGroup:keychainAccessGroup];
+            if (_identityPoolConfiguration == nil) {
+                _defaultCognitoCredentialsProvider = [[AWSCognitoCredentialsProvider alloc] initWithRegionType:cognitoIdentityRegion
+                                                                                                identityPoolId:cognitoIdentityPoolID
+                                                                                               keychainService:keychainService
+                                                                                           keychainAccessGroup:keychainAccessGroup];
+            } else {
+                _defaultCognitoCredentialsProvider = [[AWSCognitoCredentialsProvider alloc] initWithRegionType:cognitoIdentityRegion
+                                                                                                identityPoolId:cognitoIdentityPoolID
+                                                                                     identityPoolConfiguration: _identityPoolConfiguration];
+            }
         }
 
         _defaultRegion = [[defaultInfoDictionary objectForKey:AWSInfoRegion] aws_regionTypeValue];
@@ -107,11 +114,11 @@ static NSDictionary<NSString *, id> * _userConfig = nil;
                 config = jsonDictionary;
             }
         }
-        
+
     } else {
         AWSDDLogDebug(@"Couldn't locate the awsconfiguration.json file. Skipping load of awsconfiguration.json.");
     }
-    
+
     if (!config) {
         config = [[[NSBundle mainBundle] infoDictionary] objectForKey:AWSInfoRoot];
     }
@@ -138,6 +145,10 @@ static NSDictionary<NSString *, id> * _userConfig = nil;
     } else {
         _userConfig = config;
     }
+}
+
++ (void)configureIdentityPoolService:(AWSServiceConfiguration *)config {
+    _identityPoolConfiguration = config;
 }
 
 + (void)overrideCredentialsProvider:(AWSCognitoCredentialsProvider *)cognitoCredentialsProvider {
@@ -168,14 +179,14 @@ static NSDictionary<NSString *, id> * _userConfig = nil;
         if (!_infoDictionary) {
             _infoDictionary = @{};
         }
-        
+
         _cognitoCredentialsProvider = [AWSInfo defaultAWSInfo].defaultCognitoCredentialsProvider;
-        
+
         _region = [[_infoDictionary objectForKey:AWSInfoRegion] aws_regionTypeValue];
         if (_region == AWSRegionUnknown) {
             _region = [AWSInfo defaultAWSInfo].defaultRegion;
         }
-        
+
         //If there is no credentials provider configured and this isn't Cognito User Pools (which
         //doesn't need one)
         if (!_cognitoCredentialsProvider && ![serviceName isEqualToString:AWSInfoCognitoUserPool]) {
@@ -184,7 +195,7 @@ static NSDictionary<NSString *, id> * _userConfig = nil;
             }
             return nil;
         }
-        
+
         if (checkRegion
             && _region == AWSRegionUnknown) {
             if (![AWSServiceManager defaultServiceManager].defaultServiceConfiguration) {
@@ -193,7 +204,7 @@ static NSDictionary<NSString *, id> * _userConfig = nil;
             return nil;
         }
     }
-    
+
     return self;
 }
 

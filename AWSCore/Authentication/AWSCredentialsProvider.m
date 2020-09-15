@@ -293,21 +293,32 @@ static NSString *const AWSCredentialsProviderKeychainIdentityId = @"identityId";
 @synthesize internalCredentials = _internalCredentials;
 
 - (instancetype)initWithRegionType:(AWSRegionType)regionType
-                    identityPoolId:(NSString *)identityPoolId {
+                    identityPoolId:(NSString *)identityPoolId
+         identityPoolConfiguration:(AWSServiceConfiguration *)configuration {
     if (self = [super init]) {
         AWSCognitoCredentialsProviderHelper *identityProvider = [[AWSCognitoCredentialsProviderHelper alloc] initWithRegionType:regionType
                                                                                                                  identityPoolId:identityPoolId
                                                                                                                 useEnhancedFlow:YES
-                                                                                                        identityProviderManager:nil];
+                                                                                                        identityProviderManager:nil
+                                                                                                      identityPoolConfiguration:configuration];
         [self setUpWithRegionType:regionType
                  identityProvider:identityProvider
                     unauthRoleArn:nil
                       authRoleArn:nil
                   keychainService:nil
-              keychainAccessGroup:nil];
+              keychainAccessGroup:nil
+        identityPoolConfiguration:configuration];
     }
 
     return self;
+}
+
+- (instancetype)initWithRegionType:(AWSRegionType)regionType
+                    identityPoolId:(NSString *)identityPoolId {
+    AWSAnonymousCredentialsProvider *credentialsProvider = [AWSAnonymousCredentialsProvider new];
+    AWSServiceConfiguration *configuration = [[AWSServiceConfiguration alloc] initWithRegion:regionType
+                                                                         credentialsProvider:credentialsProvider];
+    return [self initWithRegionType:regionType identityPoolId:identityPoolId identityPoolConfiguration:configuration];
 }
 
 - (instancetype)initWithRegionType:(AWSRegionType)regionType
@@ -425,7 +436,8 @@ static NSString *const AWSCredentialsProviderKeychainIdentityId = @"identityId";
               unauthRoleArn:(NSString *)unauthRoleArn
                 authRoleArn:(NSString *)authRoleArn
             keychainService:(NSString *)keychainService
-        keychainAccessGroup:(NSString *)keychainAccessGroup {
+        keychainAccessGroup:(NSString *)keychainAccessGroup
+  identityPoolConfiguration:(AWSServiceConfiguration *)configuration {
     _refreshExecutor = [AWSExecutor executorWithOperationQueue:[NSOperationQueue new]];
     _refreshingCredentials = NO;
     _semaphore = dispatch_semaphore_create(0);
@@ -453,13 +465,8 @@ static NSString *const AWSCredentialsProviderKeychainIdentityId = @"identityId";
     else {
         identityProvider.identityId = _keychain[AWSCredentialsProviderKeychainIdentityId];
     }
-
-    AWSAnonymousCredentialsProvider *credentialsProvider = [AWSAnonymousCredentialsProvider new];
-    AWSServiceConfiguration *configuration = [[AWSServiceConfiguration alloc] initWithRegion:regionType
-                                                                         credentialsProvider:credentialsProvider];
-
     _cognitoIdentity = [[AWSCognitoIdentity alloc] initWithConfiguration:configuration];
-    
+
     _customRoleArnOverride = nil;
 
     if (!_useEnhancedFlow) {
@@ -467,6 +474,24 @@ static NSString *const AWSCredentialsProviderKeychainIdentityId = @"identityId";
     }
 
     _internalCredentials = [[AWSCredentials alloc] initFromKeychain:self.keychain];
+}
+
+- (void)setUpWithRegionType:(AWSRegionType)regionType
+           identityProvider:(id<AWSCognitoCredentialsProviderHelper>)identityProvider
+              unauthRoleArn:(NSString *)unauthRoleArn
+                authRoleArn:(NSString *)authRoleArn
+            keychainService:(NSString *)keychainService
+        keychainAccessGroup:(NSString *)keychainAccessGroup {
+    AWSAnonymousCredentialsProvider *credentialsProvider = [AWSAnonymousCredentialsProvider new];
+    AWSServiceConfiguration *configuration = [[AWSServiceConfiguration alloc] initWithRegion:regionType
+                                                                         credentialsProvider:credentialsProvider];
+    [self setUpWithRegionType:regionType
+             identityProvider:identityProvider
+                unauthRoleArn:unauthRoleArn
+                  authRoleArn:authRoleArn
+              keychainService:keychainService
+          keychainAccessGroup:keychainAccessGroup
+    identityPoolConfiguration:configuration];
 }
 
 - (AWSTask<AWSCredentials *> *)getCredentialsWithSTS:(NSDictionary<NSString *,NSString *> *)logins
