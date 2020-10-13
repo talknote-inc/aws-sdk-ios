@@ -74,7 +74,7 @@ static AWSServiceConfiguration *_identityPoolConfiguration = nil;
         NSString *cognitoIdentityPoolID = [defaultCredentialsProviderDictionary objectForKey:AWSInfoCognitoIdentityPoolId];
         NSDictionary <NSString *, id> *defaultKeychainDictionary = [_rootInfoDictionary objectForKey:AWSInfoKeychain];
         NSString *keychainService = [defaultKeychainDictionary objectForKey:AWSInfoKeychainService];
-        NSString *keychainAccessGroup = [defaultKeychainDictionary objectForKey:AWSInfoKeychainService];
+        NSString *keychainAccessGroup = [defaultKeychainDictionary objectForKey:AWSInfoKeychainAccessGroup];
 
         AWSRegionType cognitoIdentityRegion =  [[defaultCredentialsProviderDictionary objectForKey:AWSInfoRegion] aws_regionTypeValue];
         if (cognitoIdentityPoolID && cognitoIdentityRegion != AWSRegionUnknown) {
