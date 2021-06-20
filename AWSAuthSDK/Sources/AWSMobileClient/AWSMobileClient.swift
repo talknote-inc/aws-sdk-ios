@@ -70,7 +70,10 @@ final public class AWSMobileClient: _AWSMobileClient {
     internal var tokenURIQueryParameters: [String: String]? = nil
     internal var signOutURIQueryParameters: [String: String]? = nil
     internal var scopes: [String]? = nil
-    
+    // added 20200605 by kubota
+    // for Talknote SAML
+    internal var cognitoAuthParameters: CognitoAuthParameters? = nil
+
     // MARK: Execution Helpers (DispatchQueue, OperationQueue, DispatchGroup)
     
     // Internal DispatchQueue which will be used synchronously to initialize the AWSMobileClient.
@@ -110,6 +113,7 @@ final public class AWSMobileClient: _AWSMobileClient {
     let CustomRoleArnKey: String = "customRoleArn"
     let FederationDisabledKey: String = "federationDisabled"
     let HostedUIOptionsScopesKey: String = "hostedUIOptionsScopes"
+    let HostedUIOptionsCognitoAuthParametersKey: String = "hostedUIOptionsCognitoAuthParametersKey"
     
     /// The internal Cognito Credentials Provider
     var internalCredentialsProvider: AWSCognitoCredentialsProvider?
@@ -122,7 +126,12 @@ final public class AWSMobileClient: _AWSMobileClient {
     
     internal weak var developerNavigationController: UINavigationController? = nil
     
-    var keychain: AWSUICKeyChainStore = AWSUICKeyChainStore.init(service: "\(String(describing: Bundle.main.bundleIdentifier)).AWSMobileClient")
+    var keychain: AWSUICKeyChainStore = {
+        let keychainInfo = AWSInfo.default().rootInfoDictionary["Keychain"] as? Dictionary<String, Any>
+        let service = keychainInfo?["Service"] as? String ?? Bundle.main.bundleIdentifier
+        let accessGroup = keychainInfo?["AccessGroup"] as? String
+        return AWSUICKeyChainStore.init(service: "\(String(describing: service)).AWSMobileClient", accessGroup: accessGroup)
+    }()
     
     internal var isCognitoAuthRegistered = false
     internal let CognitoAuthRegistrationKey = "AWSMobileClient"
@@ -253,12 +262,20 @@ final public class AWSMobileClient: _AWSMobileClient {
             if self.federationProvider == .hostedUI {
                 loadHostedUIScopesFromKeychain()
                 loadOAuthURIQueryParametersFromKeychain()
+                loadHostedUIOptionsCognitoAuthParameters()
                 
                 let infoDictionaryMobileClient = self.awsInfo.rootInfoDictionary["Auth"] as? [String: [String: Any]]
                 let infoDictionary: [String: Any]? = infoDictionaryMobileClient?["Default"]?["OAuth"] as? [String: Any]
                 
-                let clientId = infoDictionary?["AppClientId"] as? String
-                let secret = infoDictionary?["AppClientSecret"] as? String
+                let clientId: String?
+                let secret: String?
+                if let cognitoAuthParameters = cognitoAuthParameters {
+                    clientId = cognitoAuthParameters.clientId
+                    secret = cognitoAuthParameters.clientSecret
+                } else {
+                    clientId = infoDictionary?["AppClientId"] as? String
+                    secret = infoDictionary?["AppClientSecret"] as? String
+                }
                 let webDomain = infoDictionary?["WebDomain"] as? String
                 let hostURL = "https://\(webDomain!)"
                 
@@ -503,8 +520,16 @@ final public class AWSMobileClient: _AWSMobileClient {
         let infoDictionaryMobileClient = AWSInfo.default().rootInfoDictionary["Auth"] as? [String: [String: Any]]
         let infoDictionary: [String: Any]? = infoDictionaryMobileClient?["Default"]?["OAuth"] as? [String: Any]
         
-        let clientId = infoDictionary?["AppClientId"] as? String
-        let secret = infoDictionary?["AppClientSecret"] as? String
+        var clientId = infoDictionary?["AppClientId"] as? String
+        var secret = infoDictionary?["AppClientSecret"] as? String
+
+        self.cognitoAuthParameters = hostedUIOptions.parameters
+        if self.cognitoAuthParameters != nil {
+            clientId = self.cognitoAuthParameters?.clientId
+            secret = self.cognitoAuthParameters?.clientSecret
+        } else {
+            clearHostedUIOptionsCognitoAuthParameters()
+        }
         let webDomain = infoDictionary?["WebDomain"] as? String
         let hostURL = "https://\(webDomain!)"
         
@@ -616,6 +641,9 @@ final public class AWSMobileClient: _AWSMobileClient {
         // Upon successful sign in, store scopes specified using HostedUIOptions in Keychain
         if hostedUIOptions.scopes != nil {
             self.saveHostedUIOptionsScopesInKeychain()
+        }
+        if hostedUIOptions.parameters != nil {
+            self.saveHostedUIOptionsCognitoAuthParameters()
         }
         let federationProviderIdentifier = hostedUIOptions.federationProviderName
         

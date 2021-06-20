@@ -615,6 +615,80 @@ jobs:
           command: |
             python3 CircleciScripts/cloudfront_invalidate.py sdk_xcf_release "${XCF_RELEASE_DISTRIBUTION_ID}" "aws-sdk-ios/latest/$sdkName.zip"
 
+  bump_ios_amplifydocs_version:
+    macos:
+      xcode: "12.1.0"
+    steps:
+      - skip_job_unless_required
+      - set_environment_variables
+      - quit_for_nominorversion
+      - checkout
+      - run:
+          name: Set environment variables
+          command: |
+            bumpversion_repo_user=aws-amplify
+            bumpversion_repo_name=docs
+            minorversion=$(echo $release_version | sed "s/\([0-9]*.[0-9]*\).[0-9]*/\1/")
+            echo ${minorversion}
+            bump_version_message="Update iOS docs to ${release_version}"
+            bump_version_pr_title="Update iOS docs to ${release_version}"
+            echo "export bumpversion_repo_user=$bumpversion_repo_user" >> $BASH_ENV
+            echo "export bumpversion_repo_name=$bumpversion_repo_name" >> $BASH_ENV
+            echo "export minorversion=$minorversion" >> $BASH_ENV
+            echo "export bump_version_message='${bump_version_message}'" >> $BASH_ENV
+            echo "export bump_version_pr_title='${bump_version_pr_title}'" >> $BASH_ENV
+            echo "bump_version_pr_title:$bump_version_pr_title"
+      - bump_version_pre
+      - run:
+          name: Bump docs version
+          command:
+            python3 CircleciScripts/bump_iosdocs_version.py "$(pwd)/${bumpversion_repo_name}/ios" $release_version
+      - bump_version_post
+
+  release_ios_s3:
+    macos:
+      xcode: "12.1.0"
+    environment:
+      TERM: xterm-256color
+    steps:
+      - skip_job_unless_required
+      - checkout
+      - update_brew
+      - set_environment_variables
+      - configure_aws
+      - restore_cache:
+          key: carthage_build_result-{{ .Revision }}
+      - run:
+          name: Make directory structure
+          command: |
+            mkdir -p "$sdkNameWithVersion"
+            mv "Carthage/Build/iOS" "$sdkNameWithVersion/frameworks"
+            rm -rf "Carthage/Build"
+      - run:
+          name: Copy SDK resource files
+          command: |
+            python3 CircleciScripts/copy_resourcefiles.py "$(pwd)" "$(pwd)/$sdkNameWithVersion"
+      - run:
+          name: Zip SDK folder
+          command: |
+            zip -r "$sdkNameWithVersion.zip" "$sdkNameWithVersion"
+      - run:
+          name: Copy zip file
+          command: |
+            mkdir -p sdkfiles
+            cp "$sdkNameWithVersion.zip" "sdkfiles/$sdkNameWithVersion.zip"
+      - store_artifacts:
+          path: sdkfiles
+      - run:
+          name: Upload to S3
+          command: |
+            aws s3api put-object --bucket "$release_bucket" --key "$sdkNameWithVersion.zip" --body "$sdkNameWithVersion.zip" --content-disposition "attachment;filename=$sdkNameWithVersion.zip" --acl public-read --profile sdk_s3_release
+            aws s3api put-object --bucket "$release_bucket" --key "latest/$sdkName.zip" --body "$sdkNameWithVersion.zip" --content-disposition "attachment;filename=$sdkNameWithVersion.zip" --acl public-read --profile sdk_s3_release
+      - run:
+          name: Invalidate cloudfront
+          command: |
+            python3 CircleciScripts/cloudfront_invalidate.py sdk_s3_release "${S3_RELEASE_DISTRIBUTION_ID}" "latest/$sdkName.zip"
+
   bump_sdk_version:
     macos:
       xcode: "12.1.0"
@@ -1444,9 +1518,19 @@ workflows:
               ignore: /.*/
             tags:
               only: /^[0-9]+.[0-9]+.[0-9]+$/
+      - bump_ios_amplifydocs_version:
+          requires:
+            - release_tag
+            - release_ios_s3
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^[0-9]+.[0-9]+.[0-9]+$/
       - release_cocoapods:
           requires:
             - add_doc_tag
+            - bump_ios_amplifydocs_version
           filters:
             branches:
               ignore: /.*/
@@ -1456,6 +1540,7 @@ workflows:
           requires:
             - build_xcframeworks
             - add_doc_tag
+            - bump_ios_amplifydocs_version
           filters:
             branches:
               ignore: /.*/

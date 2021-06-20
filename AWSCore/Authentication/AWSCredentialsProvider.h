@@ -215,6 +215,23 @@ Initializer for credentials provider with enhanced authentication flow. This is 
            identityProviderManager:(nullable id<AWSIdentityProviderManager>)identityProviderManager;
 
 /**
+Initializer for credentials provider with enhanced authentication flow. This is the recommended method for first time Amazon Cognito developers. Will create an instance of `AWSEnhancedCognitoIdentityProvider`.
+
+@param regionType The region in which your identity pool exists.
+@param identityPoolId The identity pool id for this provider. Value is used to communicate with Amazon Cognito as well as namespace values stored in the keychain.
+@param identityProviderManager An object that conforms to the `AWSIdentityProviderManager` protocol. It should return a valid `login` dictionary when requested. Can be nil if identity is unauthenticated.
+@param keychainService A key whose value is a string indicating the keychain service to store credentials.
+@param keychainAccessGroup A key whose value is a string indicating the keychaing access group to store credentials.
+*/
+- (instancetype)initWithRegionType:(AWSRegionType)regionType
+                    identityPoolId:(NSString *)identityPoolId
+           identityProviderManager:(nullable id<AWSIdentityProviderManager>)identityProviderManager
+                   keychainService:(nullable NSString *)keychainService
+               keychainAccessGroup:(nullable NSString *)keychainAccessGroup;
+
+/*
+
+/**
  Initializer for credentials provider with pre-created `AWSCognitoCredentialsProviderHelper`. Use this method when using developer authenticated identities.
 
  @param regionType The region in which your identity pool exists.
@@ -222,6 +239,19 @@ Initializer for credentials provider with enhanced authentication flow. This is 
  */
 - (instancetype)initWithRegionType:(AWSRegionType)regionType
                   identityProvider:(id<AWSCognitoCredentialsProviderHelper>)identityProvider;
+
+/**
+ Initializer for credentials provider with pre-created `AWSCognitoCredentialsProviderHelper`. Use this method when using developer authenticated identities.
+
+ @param regionType The region in which your identity pool exists.
+ @param identityPoolId The identity pool id for this provider. Value is used to communicate with Amazon Cognito as well as namespace values stored in the keychain.
+ @param keychainService A key whose value is a string indicating the keychain service to store credentials.
+ @param keychainAccessGroup A key whose value is a string indicating the keychaing access group to store credentials.
+ */
+- (instancetype)initWithRegionType:(AWSRegionType)regionType
+                    identityPoolId:(NSString *)identityPoolId
+                   keychainService:(nullable NSString *)keychainService
+               keychainAccessGroup:(nullable NSString *)keychainAccessGroup;
 
 /**
  Initializer for credentials provider with pre-created `AWSCognitoCredentialsProviderHelper`. Only use this method if you need to set your IAM roles client side and use developer authenticated identities
