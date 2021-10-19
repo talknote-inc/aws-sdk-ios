@@ -1591,6 +1591,69 @@ static const NSString * AWSCognitoIdentityUserUserAttributePrefix = @"userAttrib
     }];
 }
 
+- (AWSTask <NSDictionary<NSString *, NSString *> *>*)getBackup {
+
+    NSString * keyChainNamespace = [self keyChainNamespaceClientId];
+    NSDictionary<NSString *, NSString *> *backup = @{
+        @"username": self.username,
+        @"refreshToken": [self refreshTokenFromKeyChain:keyChainNamespace],
+    };
+    return [AWSTask taskWithResult:backup];
+}
+
+- (AWSTask<AWSCognitoIdentityUserSession *> *) getSession: (NSDictionary<NSString *, NSString *> *) backup {
+    NSString *refreshToken = backup[@"refreshToken"];
+    NSString *username = backup[@"username"];
+    if(refreshToken && username){
+        self.username = username;
+        [self.pool setCurrentUser:self.username];
+        NSString * keyChainNamespace = [self keyChainNamespaceClientId];
+        NSString * refreshTokenKey = [self keyChainKey:keyChainNamespace key:AWSCognitoIdentityUserRefreshToken];
+        self.pool.keychain[refreshTokenKey] = refreshToken;
+        AWSCognitoIdentityProviderInitiateAuthRequest * request = [AWSCognitoIdentityProviderInitiateAuthRequest new];
+        request.authFlow = AWSCognitoIdentityProviderAuthFlowTypeRefreshTokenAuth;
+        request.clientId = self.pool.userPoolConfiguration.clientId;
+        request.analyticsMetadata = [self.pool analyticsMetadata];
+        request.userContextData = [self.pool userContextData:self.username deviceId: [self asfDeviceId]];
+
+        NSMutableDictionary * authParameters = [[NSMutableDictionary alloc] initWithDictionary:@{@"REFRESH_TOKEN" : refreshToken}];
+
+        //refresh token secret hash is actually client secret for this api, set it if it is supplied
+        if(self.pool.userPoolConfiguration.clientSecret != nil){
+            [authParameters setObject:self.pool.userPoolConfiguration.clientSecret forKey:@"SECRET_HASH"];
+        }
+
+        [self addDeviceKey:authParameters];
+
+        request.authParameters = authParameters;
+        return [[self.pool.client initiateAuth:request] continueWithBlock:^id _Nullable(AWSTask<AWSCognitoIdentityProviderInitiateAuthResponse *> * _Nonnull task) {
+            if(task.error){
+                //If this token is no longer valid, fall back on interactive auth.
+                if(task.error.code == AWSCognitoIdentityProviderErrorNotAuthorized) {
+                    return [self interactiveAuth];
+                } else {
+                    return task;
+                }
+            }
+
+            AWSCognitoIdentityProviderInitiateAuthResponse *response = task.result;
+            AWSCognitoIdentityProviderAuthenticationResultType *authResult = response.authenticationResult;
+            /** Check to see if refreshToken is received in the response.
+             If not, load it from the keychain.
+             */
+            NSString * refreshToken = authResult.refreshToken;
+            if (refreshToken == nil){
+                NSString * keyChainNamespace = [self keyChainNamespaceClientId];
+                refreshToken = [self refreshTokenFromKeyChain:keyChainNamespace];
+            }
+            AWSCognitoIdentityUserSession * session = [[AWSCognitoIdentityUserSession alloc] initWithIdToken: authResult.idToken accessToken:authResult.accessToken refreshToken:refreshToken expiresIn:authResult.expiresIn];
+            [self updateUsernameAndPersistTokens:session];
+            return [AWSTask taskWithResult:session];
+        }];
+    }
+    return [self interactiveAuth];
+}
+
 - (void) updateUsernameAndPersistTokens: (AWSCognitoIdentityUserSession *) session {
     [self.pool setCurrentUser:self.username];
     NSString * keyChainNamespace = [self keyChainNamespaceClientId];

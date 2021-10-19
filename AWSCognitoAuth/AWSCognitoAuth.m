@@ -698,6 +698,66 @@ withPresentingViewController:(UIViewController *)presentingViewController {
     [self clearLastKnownUser];
 }
 
+#pragma mark backup
+
+- (void) signInWithBackup:(NSDictionary<NSString *,NSString *> *)backup completion:(AWSCognitoAuthGetSessionBlock)completion {
+    __block __weak NSOperation *weakGetSessionOperation;
+    NSOperation *getSessionOperation =  [NSBlockOperation blockOperationWithBlock:^{
+        [self signInWithBackupInternal:backup completion:completion];
+        if(weakGetSessionOperation.isCancelled){
+            [self dismissSafariViewControllerAndCompleteGetSession:nil error:self.getSessionError];
+        }
+    }];
+    weakGetSessionOperation = getSessionOperation;
+    [self.getSessionQueue addOperation:getSessionOperation];
+}
+
+- (void) signInWithBackupInternal: (NSDictionary<NSString *,NSString * > *)backup completion:(AWSCognitoAuthGetSessionBlock)completion {
+    [self prepareForSignIn:nil completion:completion];
+    NSString * username = backup[@"username"];
+    if (username) {
+        __block NSString * keyChainNamespace = [self keyChainNamespaceClientId: username];
+        NSString * refreshToken = backup[@"refresh_token"];
+        if (refreshToken) {
+            NSString * refreshTokenKey = [self keyChainKey:keyChainNamespace key:AWSCognitoAuthUserRefreshToken];
+            self.keychain[refreshTokenKey] = refreshToken;
+            [self setCurrentUser:username];
+            NSString *url = [NSString stringWithFormat:@"%@",self.authConfiguration.tokensUri];
+            NSString *queryParameters = [self getQueryStringSuffixForParameters:self.authConfiguration.tokensUriQueryParameters];
+            NSString *body = [NSString stringWithFormat:@"grant_type=refresh_token&client_id=%@&refresh_token=%@",self.authConfiguration.appClientId, refreshToken];
+            if(queryParameters) {
+                body = [NSString stringWithFormat:@"%@&%@", body, queryParameters];
+            }
+            NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:url]];
+            [self addHeaders:request];
+            request.HTTPMethod = @"POST";
+            request.HTTPBody = [body dataUsingEncoding:NSUTF8StringEncoding];
+            NSURLConnection *connection = [[NSURLConnection alloc] initWithRequest:request delegate:self startImmediately:NO];
+            [connection scheduleInRunLoop:[NSRunLoop mainRunLoop]
+                                  forMode:NSDefaultRunLoopMode];
+            [connection start];
+            return;
+        }
+    }
+    [self dismissSafariViewControllerAndCompleteGetSession:nil error:nil];
+}
+
+- (void) getBackup:(AWSCognitoAuthGetBackupBlock)completion {
+    NSString * username = [self currentUsername];
+    if(username){
+        __block NSString * keyChainNamespace = [self keyChainNamespaceClientId: [self currentUsername]];
+        NSString * refreshToken = [self refreshTokenFromKeyChain:keyChainNamespace];
+        if (refreshToken) {
+            completion(@{
+                @"username": username,
+                @"refresh_token": refreshToken
+                       }, nil);
+            return;
+        }
+    }
+
+}
+
 #pragma mark date conversion
 
 /**

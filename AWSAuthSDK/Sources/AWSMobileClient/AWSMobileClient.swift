@@ -512,8 +512,9 @@ final public class AWSMobileClient: _AWSMobileClient {
             })
         }
     }
-    
-    private func configureAndRegisterCognitoAuth(hostedUIOptions: HostedUIOptions,
+
+    // 20211002: to internal from private by kubota
+    internal func configureAndRegisterCognitoAuth(hostedUIOptions: HostedUIOptions,
                                                  _ completionHandler: @escaping(UserState?, Error?) -> Void) {
         loadOAuthURIQueryParametersFromKeychain()
         
@@ -601,8 +602,9 @@ final public class AWSMobileClient: _AWSMobileClient {
         AWSCognitoAuth.registerCognitoAuth(with: cognitoAuthConfig, forKey: CognitoAuthRegistrationKey)
         isCognitoAuthRegistered = true
     }
-    
-    private func handleCognitoAuthGetSession(hostedUIOptions: HostedUIOptions,
+
+    // 20211002: to internal from private by kubota
+    internal func handleCognitoAuthGetSession(hostedUIOptions: HostedUIOptions,
                                              session: AWSCognitoAuthUserSession?,
                                              error: Error?,
                                              _ completionHandler: @escaping(UserState?, Error?) -> Void) {

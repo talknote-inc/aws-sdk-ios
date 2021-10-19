@@ -274,6 +274,17 @@ NS_ASSUME_NONNULL_BEGIN
 - (AWSTask *) forgetDevice;
 
 
+/**
+ Get backup dictionary
+ 2021/09/18 by Daisuke Kubota
+ */
+- (AWSTask<NSDictionary<NSString *, NSString *> *> *) getBackup;
+
+/**
+ Get Session with backup
+ */
+- (AWSTask<AWSCognitoIdentityUserSession *> *) getSession: (NSDictionary<NSString *, NSString *> *) backup;
+
 @end
 
 

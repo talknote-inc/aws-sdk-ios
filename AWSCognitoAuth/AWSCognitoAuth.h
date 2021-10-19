@@ -56,7 +56,7 @@ typedef NS_ENUM(NSInteger, AWSCognitoAuthClientErrorType) {
 
 typedef void (^AWSCognitoAuthGetSessionBlock)(AWSCognitoAuthUserSession * _Nullable session, NSError * _Nullable error);
 typedef void (^AWSCognitoAuthSignOutBlock)(NSError * _Nullable error);
-
+typedef void (^AWSCognitoAuthGetBackupBlock)(NSDictionary<NSString *, NSString *> * _Nullable backup, NSError * _Nullable error);
 
 /**
  A lightweight web-based ui to manage signup/signin of your end users
@@ -176,6 +176,10 @@ typedef void (^AWSCognitoAuthSignOutBlock)(NSError * _Nullable error);
             openURL:(NSURL *)url
             options:(NSDictionary<UIApplicationOpenURLOptionsKey, id> *)options;
 
+
+- (void) signInWithBackup: (NSDictionary<NSString *, NSString *> *) backup completion: (nullable AWSCognitoAuthGetSessionBlock) completion;
+
+- (void) getBackup: (nullable AWSCognitoAuthGetBackupBlock) completion;
 
 @end
 
