@@ -178,7 +178,7 @@ AWSCognitoUserPoolInternalDelegate {
         let clientSecret = (serviceInfo?.infoDictionary["AppClientSecret"] ?? serviceInfo?.infoDictionary["CognitoUserPoolAppClientSecret"]) as? String
         let pinpointAppId = serviceInfo?.infoDictionary["PinpointAppId"] as? String
         let migrationEnabled = serviceInfo?.infoDictionary["MigrationEnabled"] as? NSNumber
-        let keychainDict = AWSInfo.default().rootInfoDictionary["Keychain"] as? Dictionary<String, Any>
+        let keychainDict = AWSInfo.default().rootInfoDictionary["Keychain"] as? [String: Any]
         let keychainService = keychainDict?["Service"] as? String
         let keychainAccessGroup = keychainDict?["AccessGroup"] as? String
         let migrationEnabledBoolean = migrationEnabled?.boolValue ?? false
