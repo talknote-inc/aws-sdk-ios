@@ -105,6 +105,8 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void) clearAll;
 
++ (nullable AWSEndpoint *)resolveEndpointOverrideFromServiceInfo:(nonnull AWSServiceInfo *)serviceInfo;
+
 @end
 
 @interface AWSCognitoIdentityUserPoolConfiguration : NSObject

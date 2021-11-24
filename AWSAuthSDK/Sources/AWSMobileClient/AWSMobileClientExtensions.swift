@@ -141,7 +141,18 @@ extension AWSMobileClient {
         }
     }
     
+    internal convenience init(name: String, setDelegate: Bool) {
+        self.init()
+        if (setDelegate) {
+            UserPoolOperationsHandler.named(name: name).authHelperDelegate = self
+        }
+        self.name = name
+    }
+    
     internal var userpoolOpsHelper: UserPoolOperationsHandler {
+        if let name = name {
+            return UserPoolOperationsHandler.named(name: name)
+        }
         return UserPoolOperationsHandler.sharedInstance
     }
     

@@ -44,6 +44,8 @@ enum FederationProvider: String {
 final public class AWSMobileClient: _AWSMobileClient {
     
     static var _sharedInstance: AWSMobileClient = AWSMobileClient(setDelegate: true)
+    
+    static var _cachedInstances: [String: AWSMobileClient] = [:]
 
     static var serviceConfiguration: CognitoServiceConfiguration? = nil
 
@@ -126,15 +128,27 @@ final public class AWSMobileClient: _AWSMobileClient {
     
     internal weak var developerNavigationController: UINavigationController? = nil
     
-    var keychain: AWSUICKeyChainStore = {
+    lazy var keychain: AWSUICKeyChainStore = {
         let keychainInfo = AWSInfo.default().rootInfoDictionary["Keychain"] as? Dictionary<String, Any>
         let service = keychainInfo?["Service"] as? String ?? Bundle.main.bundleIdentifier
         let accessGroup = keychainInfo?["AccessGroup"] as? String
+        if let name = name {
+            return AWSUICKeyChainStore.init(service: "\(String(describing: service)).\(name).AWSMobileClient", accessGroup: accessGroup)
+        }
         return AWSUICKeyChainStore.init(service: "\(String(describing: service)).AWSMobileClient", accessGroup: accessGroup)
     }()
     
     internal var isCognitoAuthRegistered = false
-    internal let CognitoAuthRegistrationKey = "AWSMobileClient"
+    internal var CognitoAuthRegistrationKey: String {
+        get {
+            if let name = name {
+                return "AWSMobileClient.\(name)"
+            }
+            return "AWSMobileClient"
+        }
+    }
+    
+    internal var name: String? = nil
     
     /// The registered listeners who want to observe change in `UserState`.
     var listeners: [(AnyObject, UserStateChangeCallback)] = []
@@ -218,6 +232,15 @@ final public class AWSMobileClient: _AWSMobileClient {
     /// - Returns: The default `AWSMobileClient` instance
     @objc public class func `default`() -> AWSMobileClient {
         return _sharedInstance
+    }
+    
+    @objc public class func named(name: String) -> AWSMobileClient {
+        if let client = _cachedInstances[name] {
+            return client
+        }
+        let client = AWSMobileClient(name: name, setDelegate: true)
+        _cachedInstances[name] = client
+        return client
     }
 
     public func handleAuthResponse(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) {
@@ -336,13 +359,14 @@ final public class AWSMobileClient: _AWSMobileClient {
                 self.userPoolClient?.isCustomAuth = true
             }
             
-            let infoObject = AWSInfo.default().defaultServiceInfo("IdentityManager")
-            if let credentialsProvider = infoObject?.cognitoCredentialsProvider {
-                
+            if let credentialsProvider = cognitoCredentialsProvider() {
+
                 self.isAuthorizationAvailable = true
                 self.internalCredentialsProvider = credentialsProvider
-                self.update(self)
-                self.internalCredentialsProvider?.setIdentityProviderManagerOnce(self)
+                if name == nil {
+                    self.update(self)
+                    self.internalCredentialsProvider?.setIdentityProviderManagerOnce(self)
+                }
                 self.registerConfigSignInProviders()
                 
                if (self.internalCredentialsProvider?.identityId != nil) {
@@ -419,7 +443,6 @@ final public class AWSMobileClient: _AWSMobileClient {
         }
         developerNavigationController = nil
         configureAndRegisterCognitoAuth(hostedUIOptions: hostedUIOptions, completionHandler)
-        
         let cognitoAuth = AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey)
         cognitoAuth.delegate = self
         

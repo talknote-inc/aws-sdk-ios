@@ -64,12 +64,33 @@ AWSCognitoUserPoolInternalDelegate {
     var authHelperDelegate: UserPoolAuthHelperlCallbacks?
     var customAuthHandler: AWSUserPoolCustomAuthHandler?
     internal static let sharedInstance: UserPoolOperationsHandler = UserPoolOperationsHandler()
+    private static var cachedInstance: [String: UserPoolOperationsHandler] = [:]
 
     static var serviceConfiguration: CognitoServiceConfiguration? = nil
 
+    private var name: String?
+
+    internal static func named(name: String) -> UserPoolOperationsHandler {
+        if let instance = cachedInstance[name] {
+            return instance
+        }
+        let result = UserPoolOperationsHandler(name: name)
+        cachedInstance[name] = result
+        return result
+    }
     
     public override init() {
         super.init()
+        self.name = nil
+        if (AWSInfo.default().defaultServiceInfo("CognitoUserPool") != nil) {
+            self.userpoolClient = self.getUserPoolClient()
+            self.userpoolClient?.delegate = self
+        }
+    }
+
+    private init(name: String) {
+        super.init()
+        self.name = name
         if (AWSInfo.default().defaultServiceInfo("CognitoUserPool") != nil) {
             self.userpoolClient = self.getUserPoolClient()
             self.userpoolClient?.delegate = self
@@ -79,11 +100,14 @@ AWSCognitoUserPoolInternalDelegate {
     private func getUserPoolClient() -> AWSCognitoIdentityUserPool {
         
         guard let serviceConfig = UserPoolOperationsHandler.serviceConfiguration?.userPoolServiceConfiguration else {
+            if let name = name {
+                return userPool(name: name)
+            }
             return AWSCognitoIdentityUserPool.default()
         }
 
         // Check if a AWSCognitoIdentityUserPool is already registered with the given key.
-        let clientKey = "CognitoUserPoolKey"
+        let clientKey = name != nil ? "CognitoUserPoolKey.\(name!)" : "CognitoUserPoolKey"
         if let client = AWSCognitoIdentityUserPool.init(forKey: clientKey) {
             return client
         }
@@ -124,6 +148,58 @@ AWSCognitoUserPoolInternalDelegate {
             customAuthHandler?.authHelperDelegate = authHelperDelegate
         }
         return customAuthHandler!
+    }
+
+    private func userPool(name: String) -> AWSCognitoIdentityUserPool {
+        let clientKey = "CognitoUserPoolKey.\(name)"
+        if let userPool = AWSCognitoIdentityUserPool(forKey: clientKey) {
+            return userPool
+        }
+        var serviceConfiguration: AWSServiceConfiguration?
+        let serviceInfo = AWSInfo.default().defaultServiceInfo("CognitoUserPool")
+        if let serviceInfo = serviceInfo {
+            let endpointOverride = AWSCognitoIdentityUserPool.resolveEndpointOverride(from: serviceInfo)
+            if let endpointOverride = endpointOverride {
+                serviceConfiguration = AWSServiceConfiguration(
+                    region: serviceInfo.region,
+                    endpoint: endpointOverride,
+                    credentialsProvider: nil,
+                    localTestingEnabled: false
+                )
+            } else {
+                serviceConfiguration = AWSServiceConfiguration(
+                    region: serviceInfo.region,
+                    credentialsProvider: nil
+                )
+            }
+        }
+        let poolId = (serviceInfo?.infoDictionary["PoolId"] ?? serviceInfo?.infoDictionary["CognitoUserPoolId"]) as? String
+        let clientId = (serviceInfo?.infoDictionary["AppClientId"] ?? serviceInfo?.infoDictionary["CognitoUserPoolAppClientId"]) as? String
+        let clientSecret = (serviceInfo?.infoDictionary["AppClientSecret"] ?? serviceInfo?.infoDictionary["CognitoUserPoolAppClientSecret"]) as? String
+        let pinpointAppId = serviceInfo?.infoDictionary["PinpointAppId"] as? String
+        let migrationEnabled = serviceInfo?.infoDictionary["MigrationEnabled"] as? NSNumber
+        let keychainDict = AWSInfo.default().rootInfoDictionary["Keychain"] as? Dictionary<String, Any>
+        let keychainService = keychainDict?["Service"] as? String
+        let keychainAccessGroup = keychainDict?["AccessGroup"] as? String
+        let migrationEnabledBoolean = migrationEnabled?.boolValue ?? false
+        if let poolId = poolId, let clientId = clientId {
+            let configuration = AWSCognitoIdentityUserPoolConfiguration(
+                clientId: clientId,
+                clientSecret: clientSecret,
+                poolId: poolId,
+                shouldProvideCognitoValidationData: true,
+                pinpointAppId: pinpointAppId,
+                migrationEnabled: migrationEnabledBoolean,
+                keychainService: keychainService != nil
+                    ? "\(keychainService!).\(name)" : nil,
+                keychainAccessGroup: keychainAccessGroup
+            )
+            AWSCognitoIdentityUserPool.register(with: serviceConfiguration, userPoolConfiguration: configuration, forKey: clientKey)
+        }
+        if let userPool = AWSCognitoIdentityUserPool(forKey: clientKey) {
+            return userPool
+        }
+        return AWSCognitoIdentityUserPool.default()
     }
 }
 
