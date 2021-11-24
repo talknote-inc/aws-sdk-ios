@@ -91,19 +91,19 @@ typedef void (^AWSCognitoAuthSignOutBlock)(NSError * _Nullable error);
  @param key the key to register under
  */
 + (void)registerCognitoAuthWithAuthConfiguration:(AWSCognitoAuthConfiguration *)authConfiguration
-                                          forKey:(NSString *)key;
+                                          forKey:(NSString *)key name: (nullable NSString *)name;
 /**
  Fetch a managed instance with a particular AuthConfiguration.
  @param key the key to fetch
  @return the CognitoAuth object
  */
-+ (instancetype)CognitoAuthForKey:(NSString *)key;
++ (instancetype)CognitoAuthForKey:(NSString *)key name: (nullable NSString *)name;
 
 /**
  Unregister a managed instance.
  @param key key to remove the object for
  */
-+ (void)removeCognitoAuthForKey:(NSString *)key;
++ (void)removeCognitoAuthForKey:(NSString *)key name: (nullable NSString *)name;
 
 /**
  Launches the signin UI and updates the session after the user logs in.

@@ -139,14 +139,7 @@ final public class AWSMobileClient: _AWSMobileClient {
     }()
     
     internal var isCognitoAuthRegistered = false
-    internal var CognitoAuthRegistrationKey: String {
-        get {
-            if let name = name {
-                return "AWSMobileClient.\(name)"
-            }
-            return "AWSMobileClient"
-        }
-    }
+    internal let CognitoAuthRegistrationKey: String = "AWSMobileClient"
     
     internal var name: String? = nil
     
@@ -245,7 +238,7 @@ final public class AWSMobileClient: _AWSMobileClient {
 
     public func handleAuthResponse(_ application: UIApplication, open url: URL, sourceApplication: String?, annotation: Any) {
         if (isCognitoAuthRegistered) {
-            AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey).application(application, open: url, options: [:])
+            AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey, name: name).application(application, open: url, options: [:])
         }
     }
     
@@ -345,11 +338,11 @@ final public class AWSMobileClient: _AWSMobileClient {
                                                                          signInPrivateSession: false)
                 
                 if (isCognitoAuthRegistered) {
-                    AWSCognitoAuth.remove(forKey: CognitoAuthRegistrationKey)
+                    AWSCognitoAuth.remove(forKey: CognitoAuthRegistrationKey, name: name)
                 }
-                AWSCognitoAuth.registerCognitoAuth(with: cognitoAuthConfig, forKey: CognitoAuthRegistrationKey)
+                AWSCognitoAuth.registerCognitoAuth(with: cognitoAuthConfig, forKey: CognitoAuthRegistrationKey, name: name)
                 isCognitoAuthRegistered = true
-                let cognitoAuth = AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey)
+                let cognitoAuth = AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey, name: name)
                 cognitoAuth.delegate = self
             }
             
@@ -443,7 +436,7 @@ final public class AWSMobileClient: _AWSMobileClient {
         }
         developerNavigationController = nil
         configureAndRegisterCognitoAuth(hostedUIOptions: hostedUIOptions, completionHandler)
-        let cognitoAuth = AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey)
+        let cognitoAuth = AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey, name: name)
         cognitoAuth.delegate = self
         
         // Clear the keychain if there is an existing user details
@@ -487,7 +480,7 @@ final public class AWSMobileClient: _AWSMobileClient {
             developerNavigationController = navigationController
             configureAndRegisterCognitoAuth(hostedUIOptions: hostedUIOptions, completionHandler)
             
-            let cognitoAuth = AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey)
+            let cognitoAuth = AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey, name: name)
             cognitoAuth.delegate = self
             
             // Clear the keychain if there is an existing user details
@@ -619,9 +612,9 @@ final public class AWSMobileClient: _AWSMobileClient {
                                          signInPrivateSession: hostedUIOptions.signInPrivateSession)
 
         if (isCognitoAuthRegistered) {
-            AWSCognitoAuth.remove(forKey: CognitoAuthRegistrationKey)
+            AWSCognitoAuth.remove(forKey: CognitoAuthRegistrationKey, name: name)
         }
-        AWSCognitoAuth.registerCognitoAuth(with: cognitoAuthConfig, forKey: CognitoAuthRegistrationKey)
+        AWSCognitoAuth.registerCognitoAuth(with: cognitoAuthConfig, forKey: CognitoAuthRegistrationKey, name: name)
         isCognitoAuthRegistered = true
     }
     
