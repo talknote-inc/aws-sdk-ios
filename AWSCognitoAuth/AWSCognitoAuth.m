@@ -112,7 +112,6 @@ static NSString *const AWSCognitoAuthUseSFAuthSession = @"EnableSFAuthentication
 static NSString *const AWSCognitoAuthUnknown = @"Unknown";
 static NSString * AWSCognitoAuthAsfDeviceId = @"asf.device.id";
 
-
 #pragma mark init and configuration
 
 + (instancetype)defaultCognitoAuth {
@@ -148,7 +147,7 @@ static NSString * AWSCognitoAuthAsfDeviceId = @"asf.device.id";
                                                                                                         idpIdentifier:idpIdentifier
                                                                                              userPoolIdForEnablingASF:userPoolId
                                                                                        enableSFAuthSessionIfAvailable:useSFAuthSession];
-            _defaultAuth = [[AWSCognitoAuth alloc] initWithConfiguration:authConfiguration];
+            _defaultAuth = [[AWSCognitoAuth alloc] initWithConfiguration:authConfiguration name:nil];
         } else {
             @throw [NSException exceptionWithName:NSInternalInconsistencyException
                                            reason:@"The service configuration is `nil`. You need to configure `Info.plist` before using this method."
@@ -160,23 +159,30 @@ static NSString * AWSCognitoAuthAsfDeviceId = @"asf.device.id";
 }
 
 + (void)registerCognitoAuthWithAuthConfiguration:(AWSCognitoAuthConfiguration *) authConfiguration
-                                          forKey:(NSString *)key {
+                                          forKey:(NSString *)key name: (nullable NSString *)name {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         _instanceDictionary = [NSMutableDictionary new];
         _dispatchQueue = dispatch_queue_create("com.amazonaws.AWSCognitoAuthDictionary", DISPATCH_QUEUE_SERIAL);
     });
-    AWSCognitoAuth *cognitoAuth = [[AWSCognitoAuth alloc] initWithConfiguration:authConfiguration];
+    AWSCognitoAuth *cognitoAuth = [[AWSCognitoAuth alloc] initWithConfiguration:authConfiguration name:name];
     [self setObject:cognitoAuth
-             forKey:key];
+             forKey:[AWSCognitoAuth keyNameWithKey:key name:name]];
 }
 
-+ (instancetype)CognitoAuthForKey:(NSString *)key {
-    return [self objectForKey:key];
++ (instancetype)CognitoAuthForKey:(NSString *)key name:(nullable NSString *)name {
+    return [self objectForKey:[AWSCognitoAuth keyNameWithKey:key name:name]];
 }
 
-+ (void)removeCognitoAuthForKey:(NSString *)key {
-    [self removeObjectForKey:key];
++ (void)removeCognitoAuthForKey:(NSString *)key name: (nullable NSString *)name {
+    [self removeObjectForKey:[AWSCognitoAuth keyNameWithKey:key name:name]];
+}
+
++ (NSString *)keyNameWithKey: (NSString *)key name: (nullable NSString *)name {
+    if (name == nil) {
+        return key;
+    }
+    return [NSString stringWithFormat:@"%@.%@", key, name];
 }
 
 - (instancetype)init {
@@ -187,7 +193,7 @@ static NSString * AWSCognitoAuthAsfDeviceId = @"asf.device.id";
 }
 
 // Internal init method
-- (instancetype)initWithConfiguration:(AWSCognitoAuthConfiguration *)authConfiguration; {
+- (instancetype)initWithConfiguration:(AWSCognitoAuthConfiguration *)authConfiguration name: (nullable NSString *)name {
     if (self = [super init]) {
         _signOutQueue = [NSOperationQueue new];
         _signOutQueue.maxConcurrentOperationCount = 1;
@@ -199,7 +205,10 @@ static NSString * AWSCognitoAuthAsfDeviceId = @"asf.device.id";
 
         _useSFAuthenticationSession = authConfiguration.isSFAuthenticationSessionEnabled;
         _sfAuthenticationSessionAvailable = NO;
-        _keychain = [AWSCognitoAuthUICKeyChainStore keyChainStoreWithService:[NSString stringWithFormat:@"%@.%@", [NSBundle mainBundle].bundleIdentifier, @"AWSCognitoIdentityUserPool"]];  //Consistent with AWSCognitoIdentityUserPool
+
+        NSString *keychainAccessGroup = [[[AWSInfo defaultAWSInfo].rootInfoDictionary objectForKey:@"Keychain"] objectForKey:@"AccessGroup"];
+        NSString *keychainService = [NSString stringWithFormat:@"%@.%@%@", [NSBundle mainBundle].bundleIdentifier, @"AWSCognitoIdentityUserPool", name != nil ? [NSString stringWithFormat:@".%@", name] : @""];
+        _keychain = [AWSCognitoAuthUICKeyChainStore keyChainStoreWithService:keychainService accessGroup: keychainAccessGroup];  //Consistent with AWSCognitoIdentityUserPool
     }
     return self;
 }

@@ -141,7 +141,18 @@ extension AWSMobileClient {
         }
     }
     
+    internal convenience init(name: String, setDelegate: Bool) {
+        self.init()
+        if (setDelegate) {
+            UserPoolOperationsHandler.named(name: name).authHelperDelegate = self
+        }
+        self.name = name
+    }
+    
     internal var userpoolOpsHelper: UserPoolOperationsHandler {
+        if let name = name {
+            return UserPoolOperationsHandler.named(name: name)
+        }
         return UserPoolOperationsHandler.sharedInstance
     }
     
@@ -580,7 +591,7 @@ extension AWSMobileClient {
     private func hostedUISignOut(presentationAnchor: ASPresentationAnchor,
                                  completionHandler: @escaping ((Error?) -> Void)) {
         if #available(iOS 13, *) {
-            AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey).signOut(withWebUI: presentationAnchor) { (error) in
+            AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey, name: name).signOut(withWebUI: presentationAnchor) { (error) in
                 self.handleHostedUISignOutResult(error, completionHandler: completionHandler)
             }
         } else {
@@ -590,7 +601,7 @@ extension AWSMobileClient {
     }
     
     private func hostedUILegacySignOut(completionHandler: @escaping ((Error?) -> Void)) {
-        AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey).signOut { (error) in
+        AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey, name: name).signOut { (error) in
             self.handleHostedUISignOutResult(error, completionHandler: completionHandler)
         }
     }
@@ -600,7 +611,7 @@ extension AWSMobileClient {
     public func signOut() {
         self.credentialsFetchCancellationSource.cancel()
         if federationProvider == .hostedUI {
-            AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey).signOutLocallyAndClearLastKnownUser()
+            AWSCognitoAuth.init(forKey: CognitoAuthRegistrationKey, name: self.name).signOutLocallyAndClearLastKnownUser()
         }
         self.cachedLoginsMap = [:]
         self.customRoleArnInternal = nil
@@ -816,7 +827,7 @@ extension AWSMobileClient {
         if self.federationProvider == .hostedUI {
             self.tokenFetchOperationQueue.addOperation {
                 self.tokenFetchLock.enter()
-                AWSCognitoAuth.init(forKey: self.CognitoAuthRegistrationKey).getSession({ (session, error) in
+                AWSCognitoAuth.init(forKey: self.CognitoAuthRegistrationKey, name: self.name).getSession({ (session, error) in
 
                     if let sessionError = error,
                         (sessionError as NSError).domain == AWSCognitoAuthErrorDomain,
