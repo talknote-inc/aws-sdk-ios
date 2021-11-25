@@ -112,8 +112,6 @@ static NSString *const AWSCognitoAuthUseSFAuthSession = @"EnableSFAuthentication
 static NSString *const AWSCognitoAuthUnknown = @"Unknown";
 static NSString * AWSCognitoAuthAsfDeviceId = @"asf.device.id";
 
-NSString *_name;
-
 #pragma mark init and configuration
 
 + (instancetype)defaultCognitoAuth {
@@ -207,7 +205,6 @@ NSString *_name;
 
         _useSFAuthenticationSession = authConfiguration.isSFAuthenticationSessionEnabled;
         _sfAuthenticationSessionAvailable = NO;
-        _name = name;
 
         NSString *keychainAccessGroup = [[[AWSInfo defaultAWSInfo].rootInfoDictionary objectForKey:@"Keychain"] objectForKey:@"AccessGroup"];
         NSString *keychainService = [NSString stringWithFormat:@"%@.%@%@", [NSBundle mainBundle].bundleIdentifier, @"AWSCognitoIdentityUserPool", name != nil ? [NSString stringWithFormat:@".%@", name] : @""];
