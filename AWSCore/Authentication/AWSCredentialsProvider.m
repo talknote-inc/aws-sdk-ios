@@ -322,6 +322,8 @@ static NSString *const AWSCredentialsProviderKeychainIdentityId = @"identityId";
                  identityProvider:identityProvider
                     unauthRoleArn:nil
                       authRoleArn:nil
+                  keychainService:nil
+              keychainAccessGroup:nil
         identityPoolConfiguration:configuration];
     }
 
@@ -347,7 +349,29 @@ static NSString *const AWSCredentialsProviderKeychainIdentityId = @"identityId";
         [self setUpWithRegionType:regionType
                  identityProvider:identityProvider
                     unauthRoleArn:nil
-                      authRoleArn:nil];
+                      authRoleArn:nil
+                  keychainService:nil
+              keychainAccessGroup:nil];
+    }
+
+    return self;
+}
+
+- (instancetype)initWithRegionType:(AWSRegionType)regionType
+                    identityPoolId:(NSString *)identityPoolId identityProviderManager:(id<AWSIdentityProviderManager>)identityProviderManager
+                   keychainService:(NSString *)keychainService
+               keychainAccessGroup:(NSString *)keychainAccessGroup {
+    if (self = [super init]) {
+        AWSCognitoCredentialsProviderHelper *identityProvider = [[AWSCognitoCredentialsProviderHelper alloc] initWithRegionType:regionType
+                                                                                                                 identityPoolId:identityPoolId
+                                                                                                                useEnhancedFlow:YES
+                                                                                                        identityProviderManager:identityProviderManager];
+        [self setUpWithRegionType:regionType
+                 identityProvider:identityProvider
+                    unauthRoleArn:nil
+                      authRoleArn:nil
+                  keychainService:keychainService
+              keychainAccessGroup:keychainAccessGroup];
     }
 
     return self;
@@ -359,7 +383,29 @@ static NSString *const AWSCredentialsProviderKeychainIdentityId = @"identityId";
         [self setUpWithRegionType:regionType
                  identityProvider:identityProvider
                     unauthRoleArn:nil
-                      authRoleArn:nil];
+                      authRoleArn:nil
+                  keychainService:nil
+              keychainAccessGroup:nil];
+    }
+
+    return self;
+}
+
+- (instancetype)initWithRegionType:(AWSRegionType)regionType
+                    identityPoolId:(NSString *)identityPoolId
+                   keychainService:(NSString *)keychainService
+               keychainAccessGroup:(NSString *)keychainAccessGroup {
+    if (self = [super init]) {
+        AWSCognitoCredentialsProviderHelper *identityProvider = [[AWSCognitoCredentialsProviderHelper alloc] initWithRegionType:regionType
+                                                                                                                 identityPoolId:identityPoolId
+                                                                                                                useEnhancedFlow:YES
+                                                                                                        identityProviderManager:nil];
+        [self setUpWithRegionType:regionType
+                 identityProvider:identityProvider
+                    unauthRoleArn:nil
+                      authRoleArn:nil
+                  keychainService:keychainService
+              keychainAccessGroup:keychainAccessGroup];
     }
 
     return self;
@@ -373,7 +419,9 @@ static NSString *const AWSCredentialsProviderKeychainIdentityId = @"identityId";
         [self setUpWithRegionType:regionType
                  identityProvider:identityProvider
                     unauthRoleArn:unauthRoleArn
-                      authRoleArn:authRoleArn];
+                      authRoleArn:authRoleArn
+                  keychainService:nil
+              keychainAccessGroup:nil];
     }
 
     return self;
@@ -392,7 +440,9 @@ static NSString *const AWSCredentialsProviderKeychainIdentityId = @"identityId";
         [self setUpWithRegionType:regionType
                  identityProvider:identityProvider
                     unauthRoleArn:unauthRoleArn
-                      authRoleArn:authRoleArn];
+                      authRoleArn:authRoleArn
+                  keychainService:nil
+              keychainAccessGroup:nil];
     }
 
     return self;
@@ -402,6 +452,8 @@ static NSString *const AWSCredentialsProviderKeychainIdentityId = @"identityId";
            identityProvider:(id<AWSCognitoCredentialsProviderHelper>)identityProvider
               unauthRoleArn:(NSString *)unauthRoleArn
                 authRoleArn:(NSString *)authRoleArn
+            keychainService:(NSString *)keychainService
+        keychainAccessGroup:(NSString *)keychainAccessGroup
   identityPoolConfiguration:(AWSServiceConfiguration *)configuration {
     _refreshExecutor = [AWSExecutor executorWithOperationQueue:[NSOperationQueue new]];
     _refreshingCredentials = NO;
@@ -413,7 +465,14 @@ static NSString *const AWSCredentialsProviderKeychainIdentityId = @"identityId";
     _useEnhancedFlow = !unauthRoleArn && !authRoleArn;
 
     // initialize keychain - name spaced by app bundle and identity pool id
-    _keychain = [AWSUICKeyChainStore keyChainStoreWithService:[NSString stringWithFormat:@"%@.%@.%@", [NSBundle mainBundle].bundleIdentifier, [AWSCognitoCredentialsProvider class], identityProvider.identityPoolId]];
+    NSString *keyChainStoreService;
+    if (!keychainService) {
+        keyChainStoreService = [NSString stringWithFormat:@"%@.%@.%@", [NSBundle mainBundle].bundleIdentifier, [AWSCognitoCredentialsProvider class], identityProvider.identityPoolId];
+    } else {
+        keyChainStoreService = [NSString stringWithFormat:@"%@.%@.%@", keychainService, [AWSCognitoCredentialsProvider class], identityProvider.identityPoolId];
+    }
+    _keychain = [AWSUICKeyChainStore keyChainStoreWithService:keyChainStoreService
+                                                  accessGroup:keychainAccessGroup];
 
     // If the identity provider has an identity id, use it
     if (identityProvider.identityId) {
@@ -437,7 +496,9 @@ static NSString *const AWSCredentialsProviderKeychainIdentityId = @"identityId";
 - (void)setUpWithRegionType:(AWSRegionType)regionType
            identityProvider:(id<AWSCognitoCredentialsProviderHelper>)identityProvider
               unauthRoleArn:(NSString *)unauthRoleArn
-                authRoleArn:(NSString *)authRoleArn {
+                authRoleArn:(NSString *)authRoleArn
+            keychainService:(NSString *)keychainService
+        keychainAccessGroup:(NSString *)keychainAccessGroup {
     AWSAnonymousCredentialsProvider *credentialsProvider = [AWSAnonymousCredentialsProvider new];
     AWSServiceConfiguration *configuration = [[AWSServiceConfiguration alloc] initWithRegion:regionType
                                                                          credentialsProvider:credentialsProvider];
@@ -445,6 +506,8 @@ static NSString *const AWSCredentialsProviderKeychainIdentityId = @"identityId";
              identityProvider:identityProvider
                 unauthRoleArn:unauthRoleArn
                   authRoleArn:authRoleArn
+              keychainService:keychainService
+          keychainAccessGroup:keychainAccessGroup
     identityPoolConfiguration:configuration];
 }
 
