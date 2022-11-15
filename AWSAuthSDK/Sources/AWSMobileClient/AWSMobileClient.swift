@@ -67,11 +67,19 @@ final public class AWSMobileClient: _AWSMobileClient {
     
     // Used as lock when AWSCredentials are requested
     internal var pendingAWSCredentialsCompletion: ((AWSCredentials?, Error?) -> Void)? = nil
+
+    // added 20200605 by kubota
+    // for Talknote SAML
+    internal var cognitoAuthParameters: CognitoAuthParameters? = nil
     
     internal weak var developerNavigationController: UINavigationController? = nil
     
-    var keychain: AWSUICKeyChainStore = AWSUICKeyChainStore.init(
-        service: "\(String(describing: Bundle.main.bundleIdentifier)).AWSMobileClient")
+    var keychain: AWSUICKeyChainStore = {
+        let keychainInfo = AWSInfo.default().rootInfoDictionary["Keychain"] as? Dictionary<String, Any>
+        let service = keychainInfo?["Service"] as? String ?? Bundle.main.bundleIdentifier
+        let accessGroup = keychainInfo?["AccessGroup"] as? String
+        return AWSUICKeyChainStore.init(service: "\(String(describing: service)).AWSMobileClient", accessGroup: accessGroup)
+    }()
     
     internal var isCognitoAuthRegistered = false
     
@@ -201,12 +209,21 @@ final public class AWSMobileClient: _AWSMobileClient {
             if self.federationProvider == .hostedUI {
                 loadHostedUIScopesFromKeychain()
                 loadOAuthURIQueryParametersFromKeychain()
+                loadHostedUIOptionsCognitoAuthParameters()
                 
                 let infoDictionaryMobileClient = self.awsInfo.rootInfoDictionary["Auth"] as? [String: [String: Any]]
                 let infoDictionary: [String: Any]? = infoDictionaryMobileClient?["Default"]?["OAuth"] as? [String: Any]
                 
-                let clientId = infoDictionary?["AppClientId"] as? String
-                let secret = infoDictionary?["AppClientSecret"] as? String
+                let clientId: String?
+                let secret: String?
+                if let cognitoAuthParameters = cognitoAuthParameters {
+                    clientId = cognitoAuthParameters.clientId
+                    secret = cognitoAuthParameters.clientSecret
+                } else {
+                    clientId = infoDictionary?["AppClientId"] as? String
+                    secret = infoDictionary?["AppClientSecret"] as? String
+                }
+
                 let webDomain = infoDictionary?["WebDomain"] as? String
                 let hostURL = "https://\(webDomain!)"
                 
