@@ -78,34 +78,9 @@ static NSString *const AWSKeychainAccessGroup = @"AccessGroup";
                                                                    credentialsProvider:nil];
             }
         }
-        NSString *poolId = [serviceInfo.infoDictionary objectForKey:AWSCognitoUserPoolId] ?: [serviceInfo.infoDictionary objectForKey:AWSCognitoUserPoolIdLegacy];
-        NSString *clientId = [serviceInfo.infoDictionary objectForKey:AWSCognitoUserPoolAppClientId] ?: [serviceInfo.infoDictionary objectForKey:AWSCognitoUserPoolAppClientIdLegacy];
-        NSString *clientSecret = [serviceInfo.infoDictionary objectForKey:AWSCognitoUserPoolAppClientSecret] ?: [serviceInfo.infoDictionary objectForKey:AWSCognitoUserPoolAppClientSecretLegacy];
-        NSString *pinpointAppId = [serviceInfo.infoDictionary objectForKey:AWSCognitoUserPoolPinpointAppId];
-        NSNumber *migrationEnabled = [serviceInfo.infoDictionary objectForKey:AWSCognitoUserPoolMigrationEnabled];
-        NSString *keychainService = [[[AWSInfo defaultAWSInfo].rootInfoDictionary objectForKey:AWSKeychain] objectForKey:AWSKeychainService];
-        NSString *keychainAccessGroup = [[[AWSInfo defaultAWSInfo].rootInfoDictionary objectForKey:AWSKeychain] objectForKey:AWSKeychainAccessGroup];
-        BOOL migrationEnabledBoolean = NO;
-        if (migrationEnabled != nil) {
-            migrationEnabledBoolean = [migrationEnabled boolValue];
-        }
-
-        if (poolId && clientId) {
-            AWSCognitoIdentityUserPoolConfiguration *configuration = [[AWSCognitoIdentityUserPoolConfiguration alloc] initWithClientId:clientId
-                                                                                                                          clientSecret:clientSecret
-                                                                                                                                poolId:poolId
-                                                                                                    shouldProvideCognitoValidationData:YES
-                                                                                                                         pinpointAppId:pinpointAppId
-                                                                                                                      migrationEnabled:migrationEnabledBoolean
-                                                                                                                       keychainService:keychainService
-                                                                                                                   keychainAccessGroup:keychainAccessGroup];
-            _defaultUserPool = [[AWSCognitoIdentityUserPool alloc] initWithConfiguration:serviceConfiguration
-                                                                   userPoolConfiguration:configuration];
-        } else {
-            @throw [NSException exceptionWithName:NSInternalInconsistencyException
-                                           reason:@"The service configuration is `nil`. You need to configure `Info.plist` before using this method."
-                                         userInfo:nil];
-        }
+        AWSCognitoIdentityUserPoolConfiguration *configuration = [AWSCognitoIdentityUserPool buildUserPoolConfiguration:serviceInfo];
+        _defaultUserPool = [[AWSCognitoIdentityUserPool alloc] initWithConfiguration:serviceConfiguration
+                                                               userPoolConfiguration:configuration];
     });
     
     return _defaultUserPool;
@@ -158,6 +133,8 @@ static NSString *const AWSKeychainAccessGroup = @"AccessGroup";
     NSString *clientSecret = [serviceInfo.infoDictionary objectForKey:AWSCognitoUserPoolAppClientSecret] ?: [serviceInfo.infoDictionary objectForKey:AWSCognitoUserPoolAppClientSecretLegacy];
     NSString *pinpointAppId = [serviceInfo.infoDictionary objectForKey:AWSCognitoUserPoolPinpointAppId];
     NSNumber *migrationEnabled = [serviceInfo.infoDictionary objectForKey:AWSCognitoUserPoolMigrationEnabled];
+    NSString *keychainService = [[[AWSInfo defaultAWSInfo].rootInfoDictionary objectForKey:AWSKeychain] objectForKey:AWSKeychainService];
+    NSString *keychainAccessGroup = [[[AWSInfo defaultAWSInfo].rootInfoDictionary objectForKey:AWSKeychain] objectForKey:AWSKeychainAccessGroup];
 
     BOOL migrationEnabledBoolean = NO;
     if (migrationEnabled != nil) {
@@ -175,7 +152,9 @@ static NSString *const AWSKeychainAccessGroup = @"AccessGroup";
                                                                       poolId:poolId
                                           shouldProvideCognitoValidationData:YES
                                                                pinpointAppId:pinpointAppId
-                                                            migrationEnabled:migrationEnabledBoolean ];
+                                                            migrationEnabled:migrationEnabledBoolean
+                                                             keychainService:keychainService
+                                                         keychainAccessGroup:keychainAccessGroup];
 
 }
 
