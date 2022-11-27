@@ -169,6 +169,9 @@ extension AWSMobileClient {
         if hostedUIOptions.scopes != nil {
             self.saveHostedUIOptionsScopesInKeychain()
         }
+        if hostedUIOptions.parameters != nil {
+            self.saveHostedUIOptionsCognitoAuthParameters()
+        }
         let federationProviderIdentifier = hostedUIOptions.federationProviderName
 
         self.performHostedUISuccessfulSignInTasks(disableFederation: hostedUIOptions.disableFederation, session: session, federationToken: federationToken!, federationProviderIdentifier: federationProviderIdentifier, signInInfo: &signInInfo)
@@ -198,8 +201,16 @@ extension AWSMobileClient {
         let infoDictionaryMobileClient = AWSInfo.default().rootInfoDictionary["Auth"] as? [String: [String: Any]]
         let infoDictionary: [String: Any]? = infoDictionaryMobileClient?["Default"]?["OAuth"] as? [String: Any]
 
-        let clientId = infoDictionary?["AppClientId"] as? String
-        let secret = infoDictionary?["AppClientSecret"] as? String
+        var clientId = infoDictionary?["AppClientId"] as? String
+        var secret = infoDictionary?["AppClientSecret"] as? String
+
+        self.cognitoAuthParameters = hostedUIOptions.parameters
+        if self.cognitoAuthParameters != nil {
+            clientId = self.cognitoAuthParameters?.clientId
+            secret = self.cognitoAuthParameters?.clientSecret
+        } else {
+            clearHostedUIOptionsCognitoAuthParameters()
+        }
         let webDomain = infoDictionary?["WebDomain"] as? String
         let hostURL = "https://\(webDomain!)"
 

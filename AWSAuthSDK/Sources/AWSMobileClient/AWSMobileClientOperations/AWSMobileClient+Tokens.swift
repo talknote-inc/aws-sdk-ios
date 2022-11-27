@@ -77,7 +77,13 @@ extension AWSMobileClient: FetchUserPoolTokensDelegate {
     }
 
     func getCurrentUsername(operation: FetchUserPoolTokensOperation) -> String? {
-        username
+        // このdelegate関数はトークン取得時のみ呼ばれ、saml認証ではCognitoIdentityUserBehavior取得時usernameが使われない模様。
+        // ただusernameがないとTokenが取得される前に弾かれるので、saml認証の場合、AWSCognitoAuthからのusernameを返すようにしている   2022.11.25 kim
+        if case .hostedUI = self.federationProvider, username == nil {
+            let cognitoAuth = AWSCognitoAuth(forKey: AWSMobileClientConstants.CognitoAuthRegistrationKey)
+            return cognitoAuth.currentUsername()
+        }
+        return username
     }
 
 
