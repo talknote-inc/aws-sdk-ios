@@ -31,6 +31,7 @@ struct AWSMobileClientConstants {
     static let FederationDisabledKey = "federationDisabled"
     static let HostedUIOptionsScopesKey = "hostedUIOptionsScopes"
     static let ConfigurationKey = "configurationKey"
+    static let HostedUIOptionsCognitoAuthParametersKey: String = "hostedUIOptionsCognitoAuthParametersKey"
     static let CognitoAuthRegistrationKey = "AWSMobileClient"
     
     static let notSignedInMessage = """

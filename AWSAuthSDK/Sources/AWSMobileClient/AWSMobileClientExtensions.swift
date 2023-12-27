@@ -72,4 +72,22 @@ extension AWSMobileClient {
         }
     }
 
+    // added 20200605 by kubota
+    // for Talknote SAML
+    internal func saveHostedUIOptionsCognitoAuthParameters() {
+        self.keychain.setData(
+            JSONHelper.dataFromDictionary(self.cognitoAuthParameters?.toDictionary()),
+            forKey: AWSMobileClientConstants.HostedUIOptionsCognitoAuthParametersKey
+        )
+    }
+
+    internal func loadHostedUIOptionsCognitoAuthParameters() {
+        self.cognitoAuthParameters = CognitoAuthParameters(
+            dict: JSONHelper.dictionaryFromData(self.keychain.data(forKey: AWSMobileClientConstants.HostedUIOptionsCognitoAuthParametersKey))
+        )
+    }
+
+    internal func clearHostedUIOptionsCognitoAuthParameters() {
+        self.keychain.removeItem(forKey: AWSMobileClientConstants.HostedUIOptionsCognitoAuthParametersKey)
+    }
 }

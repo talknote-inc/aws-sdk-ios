@@ -30,6 +30,10 @@ static NSString *const AWSInfoCognitoUserPool = @"CognitoUserPool";
 
 static NSString *const AWSInfoIdentityManager = @"IdentityManager";
 
+static NSString *const AWSInfoKeychain = @"Keychain";
+static NSString *const AWSInfoKeychainService = @"Service";
+static NSString *const AWSInfoKeychainAccessGroup = @"AccessGroup";
+
 @interface AWSInfo()
 
 @property (nonatomic, strong) AWSCognitoCredentialsProvider *defaultCognitoCredentialsProvider;
@@ -69,10 +73,15 @@ static AWSServiceConfiguration *_identityPoolConfiguration = nil;
         NSDictionary <NSString *, id> *defaultCredentialsProviderDictionary = [[[_rootInfoDictionary objectForKey:AWSInfoCredentialsProvider] objectForKey:AWSInfoCognitoIdentity] objectForKey:AWSInfoDefault];
         NSString *cognitoIdentityPoolID = [defaultCredentialsProviderDictionary objectForKey:AWSInfoCognitoIdentityPoolId];
         AWSRegionType cognitoIdentityRegion =  [[defaultCredentialsProviderDictionary objectForKey:AWSInfoRegion] aws_regionTypeValue];
+        NSDictionary <NSString *, id> *defaultKeychainDictionary = [_rootInfoDictionary objectForKey:AWSInfoKeychain];
+        NSString *keychainService = [defaultKeychainDictionary objectForKey:AWSInfoKeychainService];
+        NSString *keychainAccessGroup = [defaultKeychainDictionary objectForKey:AWSInfoKeychainAccessGroup];
         if (cognitoIdentityPoolID && cognitoIdentityRegion != AWSRegionUnknown) {
             if (_identityPoolConfiguration == nil) {
                 _defaultCognitoCredentialsProvider = [[AWSCognitoCredentialsProvider alloc] initWithRegionType:cognitoIdentityRegion
-                                                                                                           identityPoolId:cognitoIdentityPoolID];
+                                                                                                           identityPoolId:cognitoIdentityPoolID
+                                                                                               keychainService:keychainService
+                                                                                           keychainAccessGroup:keychainAccessGroup];
             } else {
                 _defaultCognitoCredentialsProvider = [[AWSCognitoCredentialsProvider alloc] initWithRegionType:cognitoIdentityRegion
                                                                                                            identityPoolId:cognitoIdentityPoolID
