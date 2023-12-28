@@ -36,7 +36,16 @@ extension AWSMobileClient {
     /// Note that the value stored may vary depending on how sign-in was performed.
     /// @see https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-with-identity-providers.html#amazon-cognito-user-pools-using-the-access-token
     public var username: String? {
-        return self.userpoolOpsHelper?.currentActiveUser?.username
+        if let _username = self.userpoolOpsHelper?.currentActiveUser?.username {
+            return _username
+        }
+        // SAMLログイン時はuserpoolOpsHelper?.currentActiveUserがusernameを持っていないのでAWSCognitoAuthからusernameを取得するようにする
+        // (SAMLログイン限定で)ここを外すとアプリ再起動でログアウトされる、トークン取得ができない事象あり。  2023.12.28 kim
+        if case .hostedUI = self.federationProvider {
+            let cognitoAuth = AWSCognitoAuth(forKey: AWSMobileClientConstants.CognitoAuthRegistrationKey)
+            return cognitoAuth.currentUsername()
+        }
+        return nil
     }
 
     public var userSub: String? {
