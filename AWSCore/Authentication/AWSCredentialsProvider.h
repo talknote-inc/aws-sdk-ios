@@ -192,6 +192,11 @@ typedef NS_ENUM(NSInteger, AWSCognitoCredentialsProviderErrorType) {
 - (instancetype)initWithRegionType:(AWSRegionType)regionType
                     identityPoolId:(NSString *)identityPoolId;
 
+- (instancetype)initWithRegionType:(AWSRegionType)regionType
+                    identityPoolId:(NSString *)identityPoolId
+                   keychainService:(nullable NSString *)keychainService
+               keychainAccessGroup:(nullable NSString *)keychainAccessGroup;
+
 /**
 Initializer for credentials provider with enhanced authentication flow. This is the recommended constructor for first time Amazon Cognito developers. Will create an instance of `AWSEnhancedCognitoIdentityProvider`.
 
@@ -213,6 +218,12 @@ Initializer for credentials provider with enhanced authentication flow. This is 
 - (instancetype)initWithRegionType:(AWSRegionType)regionType
                     identityPoolId:(NSString *)identityPoolId
            identityProviderManager:(nullable id<AWSIdentityProviderManager>)identityProviderManager;
+
+- (instancetype)initWithRegionType:(AWSRegionType)regionType
+                    identityPoolId:(NSString *)identityPoolId
+           identityProviderManager:(nullable id<AWSIdentityProviderManager>)identityProviderManager
+                   keychainService:(nullable NSString *)keychainService
+               keychainAccessGroup:(nullable NSString *)keychainAccessGroup;
 
 /**
  Initializer for credentials provider with pre-created `AWSCognitoCredentialsProviderHelper`. Use this method when using developer authenticated identities.

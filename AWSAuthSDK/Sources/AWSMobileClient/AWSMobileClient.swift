@@ -71,6 +71,10 @@ final public class AWSMobileClient: _AWSMobileClient {
         return queue
     }()
     
+    // added 20200605 by kubota
+    // for Talknote SAML
+    internal var cognitoAuthParameters: CognitoAuthParameters? = nil
+
     /// This token is invoked when the developer explicitly calls the signOut from
     /// AWSMobileClient, thus invalidating all credentials calls.
     var credentialsFetchCancellationSource: AWSCancellationTokenSource = AWSCancellationTokenSource()
@@ -83,9 +87,13 @@ final public class AWSMobileClient: _AWSMobileClient {
     
     internal weak var developerNavigationController: UINavigationController? = nil
     
-    var keychain: AWSUICKeyChainStore = AWSUICKeyChainStore.init(
-        service: "\(String(describing: Bundle.main.bundleIdentifier)).AWSMobileClient")
-    
+    var keychain: AWSUICKeyChainStore = {
+        let keychainInfo = AWSInfo.default().rootInfoDictionary["Keychain"] as? Dictionary<String, Any>
+        let service = keychainInfo?["Service"] as? String ?? Bundle.main.bundleIdentifier
+        let accessGroup = keychainInfo?["AccessGroup"] as? String
+        return AWSUICKeyChainStore.init(service: "\(String(describing: service)).AWSMobileClient", accessGroup: accessGroup)
+    }()
+
     internal var isCognitoAuthRegistered = false
     
     /// The registered listeners who want to observe change in `UserState`.
@@ -325,12 +333,20 @@ final public class AWSMobileClient: _AWSMobileClient {
 
         loadHostedUIScopesFromKeychain()
         loadOAuthURIQueryParametersFromKeychain()
+        loadHostedUIOptionsCognitoAuthParameters()
 
         let infoDictionaryMobileClient = self.awsInfo.rootInfoDictionary["Auth"] as? [String: [String: Any]]
         let infoDictionary: [String: Any]? = infoDictionaryMobileClient?["Default"]?["OAuth"] as? [String: Any]
 
-        let clientId = infoDictionary?["AppClientId"] as? String
-        let secret = infoDictionary?["AppClientSecret"] as? String
+        let clientId: String?
+        let secret: String?
+        if let cognitoAuthParameters = cognitoAuthParameters {
+            clientId = cognitoAuthParameters.clientId
+            secret = cognitoAuthParameters.clientSecret
+        } else {
+            clientId = infoDictionary?["AppClientId"] as? String
+            secret = infoDictionary?["AppClientSecret"] as? String
+        }
         guard let webDomain = infoDictionary?["WebDomain"] as? String else {
             throw AWSMobileClientError.invalidConfiguration(
                 message: "WebDomain is missing in the configuration for hosted UI")
