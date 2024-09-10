@@ -176,7 +176,7 @@ typedef void (^AWSCognitoAuthSignOutBlock)(NSError * _Nullable error);
             openURL:(NSURL *)url
             options:(NSDictionary<UIApplicationOpenURLOptionsKey, id> *)options;
 
-
+- (NSString *)currentUsername;
 @end
 
 /**
