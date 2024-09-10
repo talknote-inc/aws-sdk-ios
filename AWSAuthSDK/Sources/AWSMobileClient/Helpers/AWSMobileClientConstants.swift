@@ -32,7 +32,8 @@ struct AWSMobileClientConstants {
     static let HostedUIOptionsScopesKey = "hostedUIOptionsScopes"
     static let ConfigurationKey = "configurationKey"
     static let CognitoAuthRegistrationKey = "AWSMobileClient"
-    
+    static let HostedUIOptionsCognitoAuthParametersKey = "hostedUIOptionsCognitoAuthParametersKey"
+
     static let notSignedInMessage = """
     User is not signed in to Cognito User Pool, please sign in to use this API.
     """
